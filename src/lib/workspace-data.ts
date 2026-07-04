@@ -1,4 +1,4 @@
-export type WorkspaceView = "home" | "canvas" | "inbox" | "automations";
+export type WorkspaceView = "home" | "canvas" | "inbox";
 
 export type TaskPriority = "low" | "medium" | "high" | "urgent";
 export type TaskStatus = "todo" | "in-progress" | "review" | "done";
@@ -115,13 +115,11 @@ export const sidebarViews: {
 }[] = [
   { id: "canvas", label: "Canvas", href: "/app/board" },
   { id: "inbox", label: "Inbox", href: "/app/inbox" },
-  { id: "automations", label: "Automations", href: "/app/automations" },
 ];
 
 export const viewLabels: Record<Exclude<WorkspaceView, "home">, string> = {
   canvas: "Canvas",
   inbox: "Inbox",
-  automations: "Automations",
 };
 
 export function getViewFromPath(pathname: string): WorkspaceView {
@@ -129,7 +127,6 @@ export function getViewFromPath(pathname: string): WorkspaceView {
   if (normalized === "/app") return "home";
   if (pathname.startsWith("/app/board")) return "canvas";
   if (pathname.startsWith("/app/inbox")) return "inbox";
-  if (pathname.startsWith("/app/automations")) return "automations";
   return "home";
 }
 

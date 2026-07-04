@@ -4,6 +4,8 @@ import {
   Add01Icon,
   AiBrain01Icon,
   Cancel01Icon,
+  Download04Icon,
+  File01Icon,
   FileEditIcon,
   Folder01Icon,
   TickDouble01Icon,
@@ -26,7 +28,6 @@ import {
   priorityOptions,
   statusOptions,
 } from "@/components/workspace/task-field-options";
-import { TaskAgentChat } from "@/components/workspace/task-agent-chat";
 import { useTaskWorkspace } from "@/components/workspace/task-workspace-context";
 import { api } from "@/lib/trpc";
 import type {
@@ -34,6 +35,78 @@ import type {
   TaskPriority,
   TaskStatus,
 } from "@/lib/workspace-data";
+
+/**
+ * Documents generated for a task (agent reports, analyses, uploads) with the
+ * full history — newest first — and one-click download links.
+ */
+function TaskDocuments({ taskId }: { taskId: string }) {
+  const { t, locale } = useI18n();
+  const { isLive } = useTaskWorkspace();
+  const attachmentsQuery = api.attachment.list.useQuery(
+    { taskId },
+    { enabled: isLive, refetchInterval: 10_000 },
+  );
+  const getDownloadUrl = api.attachment.getDownloadUrl.useMutation();
+
+  const download = async (id: string) => {
+    const { url } = await getDownloadUrl.mutateAsync({ id });
+    window.open(url, "_blank", "noopener");
+  };
+
+  const attachments = attachmentsQuery.data ?? [];
+
+  return (
+    <section className="julow-task-detail__section">
+      <p className="julow-task-detail__label">
+        {t("task.documents")}
+        {attachments.length > 0 ? ` (${attachments.length})` : ""}
+      </p>
+      {attachments.length === 0 ? (
+        <p className="julow-task-detail__agents-empty">{t("task.noDocuments")}</p>
+      ) : (
+        <div className="space-y-1.5">
+          {attachments.map((a) => (
+            <button
+              key={a.id}
+              type="button"
+              onClick={() => void download(a.id)}
+              disabled={getDownloadUrl.isPending}
+              className="flex w-full items-center gap-2.5 rounded-xl border border-julow-glass-border px-3 py-2 text-left transition-colors hover:bg-julow-glass-bg"
+            >
+              <Icon
+                icon={File01Icon}
+                size={16}
+                className="shrink-0 text-accent"
+              />
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm font-medium">
+                  {a.name}
+                </span>
+                <span className="block truncate text-[11px] text-julow-muted">
+                  {new Date(a.createdAt).toLocaleString(
+                    locale === "ru" ? "ru-RU" : "en-US",
+                    { dateStyle: "medium", timeStyle: "short" },
+                  )}
+                  {" · "}
+                  {a.size >= 1024 * 1024
+                    ? `${(a.size / (1024 * 1024)).toFixed(1)} MB`
+                    : `${Math.max(1, Math.round(a.size / 1024))} KB`}
+                </span>
+              </span>
+              <span
+                className="shrink-0 text-julow-muted"
+                title={t("task.download")}
+              >
+                <Icon icon={Download04Icon} size={15} />
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
 
 type TaskDetailPanelProps = {
   task: InboxTask | null;
@@ -388,10 +461,8 @@ export function TaskDetailPanel({
             </div>
           )}
         </section>
-      </div>
 
-      <div className="julow-task-detail-panel__chat">
-        <TaskAgentChat task={task} />
+        <TaskDocuments taskId={task.id} />
       </div>
 
       <AgentBriefDialog

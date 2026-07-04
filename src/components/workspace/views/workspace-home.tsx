@@ -5,7 +5,6 @@ import {
   ArrowRight01Icon,
   CanvasIcon,
   InboxIcon,
-  WorkflowCircle01Icon,
 } from "@hugeicons/core-free-icons";
 import type { IconSvgElement } from "@hugeicons/react";
 import Link from "next/link";
@@ -36,13 +35,6 @@ const sections: SectionCard[] = [
     icon: InboxIcon,
     titleKey: "nav.inbox",
     descriptionKey: "home.section.inbox",
-  },
-  {
-    id: "automations",
-    href: "/app/automations",
-    icon: WorkflowCircle01Icon,
-    titleKey: "nav.automations",
-    descriptionKey: "home.section.automations",
   },
 ];
 

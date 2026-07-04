@@ -58,7 +58,7 @@ export function InboxKanban({ tasks, onStatusChange }: InboxKanbanProps) {
   };
 
   return (
-    <div className="julow-kanban-board grid min-h-[480px] grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="julow-kanban-board workspace-scroll flex min-h-[480px] flex-col gap-4 sm:flex-row sm:items-stretch sm:overflow-x-auto sm:pb-2">
       {kanbanColumns.map((status) => {
         const columnTasks = tasksByStatus(status);
         const isTarget = dropTarget === status;
@@ -66,7 +66,7 @@ export function InboxKanban({ tasks, onStatusChange }: InboxKanbanProps) {
         return (
           <div
             key={status}
-            className={`julow-kanban-column flex min-h-[200px] flex-col rounded-xl border transition-colors ${
+            className={`julow-kanban-column flex min-h-[200px] flex-col rounded-xl border transition-colors sm:w-72 sm:min-w-[17rem] sm:shrink-0 xl:w-auto xl:min-w-0 xl:flex-1 ${
               isTarget
                 ? "border-accent/40 bg-accent/5"
                 : "border-julow-glass-border bg-julow-glass-bg/30"
@@ -113,7 +113,7 @@ export function InboxKanban({ tasks, onStatusChange }: InboxKanbanProps) {
                   } ${selectedTaskId === task.id ? "ring-1 ring-accent/35" : ""}`}
                 >
                   <div className="mb-2 flex items-start justify-between gap-2">
-                    <h3 className="min-w-0 flex-1 text-sm font-medium leading-snug text-julow-fg">
+                    <h3 className="min-w-0 flex-1 break-words text-sm font-medium leading-snug text-julow-fg">
                       {task.title}
                     </h3>
                     <PriorityChip priority={task.priority} />

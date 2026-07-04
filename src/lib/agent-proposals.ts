@@ -2,8 +2,6 @@
 // confirmation. The server declares matching AI tools in
 // `src/server/ai/proposal-tools.ts`; the client renders + executes them.
 
-import { formatDate, type DateLocale } from "@/lib/task-mappers";
-
 export type TaskStatusArg = "todo" | "in-progress" | "review" | "done";
 export type TaskPriorityArg = "low" | "medium" | "high" | "urgent";
 export type CanvasNodeKind = "task" | "note" | "agent" | "milestone";
@@ -139,21 +137,32 @@ export function assignProposalNames(p: {
   return p.args.agentName ? [p.args.agentName] : [];
 }
 
-export const PROPOSAL_VERB: Record<ProposalKind, string> = {
-  propose_create_task: "Create task",
-  propose_update_task: "Update task",
-  propose_assign_task: "Assign agent",
-  propose_bulk_update_tasks: "Update tasks",
-  propose_archive_task: "Archive task",
-  propose_canvas_node: "Add canvas node",
-  propose_create_automation: "Create automation",
-  propose_delegate: "Delegate to agent",
-  propose_delegate_task: "Delegate task to team",
-  propose_create_document: "Create document",
-  propose_report: "Compile report",
-  propose_review: "Review task",
-  propose_test: "Validate task",
-  propose_send_email: "Send email",
+/** Approval-gate action type each proposal kind maps to (for auto-approve). */
+export const PROPOSAL_ACTION_TYPE: Record<
+  ProposalKind,
+  | "CREATE_TASK"
+  | "UPDATE_TASK"
+  | "DELETE_TASK"
+  | "CREATE_DOCUMENT"
+  | "SEND_EMAIL"
+  | "SPLIT_TASK"
+  | "CANVAS_NOTE"
+  | null
+> = {
+  propose_create_task: "CREATE_TASK",
+  propose_update_task: "UPDATE_TASK",
+  propose_assign_task: "UPDATE_TASK",
+  propose_bulk_update_tasks: "UPDATE_TASK",
+  propose_archive_task: "DELETE_TASK",
+  propose_canvas_node: "CANVAS_NOTE",
+  propose_create_automation: null,
+  propose_delegate: "SPLIT_TASK",
+  propose_delegate_task: "SPLIT_TASK",
+  propose_create_document: "CREATE_DOCUMENT",
+  propose_report: "CREATE_DOCUMENT",
+  propose_review: null,
+  propose_test: null,
+  propose_send_email: "SEND_EMAIL",
 };
 
 export function proposalTitle(p: AgentProposal): string {
@@ -188,117 +197,5 @@ export function proposalTitle(p: AgentProposal): string {
       return p.args.taskTitle;
     case "propose_send_email":
       return p.args.subject;
-  }
-}
-
-export function proposalDetail(p: AgentProposal, locale: DateLocale = "en"): string {
-  switch (p.kind) {
-    case "propose_create_task": {
-      const bits = [
-        p.args.projectName && `in ${p.args.projectName}`,
-        p.args.priority && `${p.args.priority} priority`,
-        p.args.status && p.args.status,
-        p.args.dueDate && `${locale === "ru" ? "срок" : "due"} ${formatDate(p.args.dueDate, locale)}`,
-        p.args.assignees?.length && `→ ${p.args.assignees.join(", ")}`,
-        p.args.tags?.length && `#${p.args.tags.join(" #")}`,
-      ].filter(Boolean);
-      return [p.args.description, bits.join(" · ")].filter(Boolean).join("\n");
-    }
-    case "propose_update_task": {
-      const ru = locale === "ru";
-      const bits = [
-        p.args.newTitle && `${ru ? "переименовать в" : "rename to"} "${p.args.newTitle}"`,
-        p.args.status && `→ ${p.args.status}`,
-        p.args.priority && `priority ${p.args.priority}`,
-        p.args.dueDate && `${ru ? "срок" : "due"} ${formatDate(p.args.dueDate, locale)}`,
-        p.args.assignees?.length && `+ ${p.args.assignees.join(", ")}`,
-        p.args.removeAssignees?.length &&
-          `${ru ? "убрать" : "remove"} ${p.args.removeAssignees.join(", ")}`,
-        p.args.tags?.length && `#${p.args.tags.join(" #")}`,
-      ].filter(Boolean);
-      return [p.args.description, bits.join(" · ")].filter(Boolean).join("\n");
-    }
-    case "propose_assign_task": {
-      const ru = locale === "ru";
-      const add = p.args.assignees?.length ? assignProposalNames(p) : [];
-      const bits = [
-        add.length && `+ ${add.join(", ")}`,
-        p.args.removeAssignees?.length &&
-          `${ru ? "убрать" : "remove"} ${p.args.removeAssignees.join(", ")}`,
-      ].filter(Boolean);
-      return bits.join(" · ");
-    }
-    case "propose_bulk_update_tasks": {
-      const ru = locale === "ru";
-      const f = p.args.filter;
-      const c = p.args.changes;
-      const from = f.status
-        ? f.status
-        : f.tags?.length
-          ? `#${f.tags.join(" #")}`
-          : ru
-            ? "все задачи"
-            : "all tasks";
-      const to = [
-        c.status && `→ ${c.status}`,
-        c.priority && `priority ${c.priority}`,
-        c.archive === true && (ru ? "в архив" : "archive"),
-        c.archive === false && (ru ? "из архива" : "restore"),
-      ].filter(Boolean);
-      return `${from} ${to.join(" · ")}`;
-    }
-    case "propose_archive_task":
-      return p.args.archived === false
-        ? locale === "ru"
-          ? "восстановить из архива"
-          : "restore from archive"
-        : locale === "ru"
-          ? "в архив"
-          : "archive";
-    case "propose_canvas_node": {
-      const bits = [
-        p.args.nodeType && `${p.args.nodeType} node`,
-        p.args.linkToTitle && `linked to "${p.args.linkToTitle}"`,
-      ].filter(Boolean);
-      return [p.args.subtitle, bits.join(" · ")].filter(Boolean).join("\n");
-    }
-    case "propose_create_automation":
-      return [p.args.description, `When ${p.args.when} → ${p.args.then}`]
-        .filter(Boolean)
-        .join("\n");
-    case "propose_delegate":
-      return p.args.objective;
-    case "propose_delegate_task": {
-      const lines = p.args.assignments.map((a) => {
-        const who = a.agentName?.trim() || (a.tool ? `(${a.tool})` : "auto");
-        const fmt = a.format ? ` [${a.format === "excel" ? "Excel" : a.format === "pdf" ? "PDF" : "Word"}]` : "";
-        return `→ ${who}${fmt}: ${a.brief}`;
-      });
-      const head = p.args.createTask
-        ? `${locale === "ru" ? "новая задача" : "new task"}: ${p.args.createTask.title}`
-        : "";
-      return [head, ...lines].filter(Boolean).join("\n");
-    }
-    case "propose_create_document": {
-      const bits = [
-        p.args.format === "excel" ? "Excel .xlsx" : p.args.format === "pdf" ? "PDF .pdf" : "Word .docx",
-        p.args.taskTitle && `attach to "${p.args.taskTitle}"`,
-      ].filter(Boolean);
-      return bits.join(" · ");
-    }
-    case "propose_report":
-      return p.args.format === "excel" ? "Markdown + Excel export" : "Markdown";
-    case "propose_review":
-    case "propose_test":
-      return p.args.criteria ?? "";
-    case "propose_send_email": {
-      const bits = [
-        `→ ${p.args.recipient}`,
-        p.args.linkUrl && p.args.linkLabel
-          ? `+ ${p.args.linkLabel}`
-          : p.args.linkUrl,
-      ].filter(Boolean);
-      return [p.args.body, bits.join(" · ")].filter(Boolean).join("\n\n");
-    }
   }
 }

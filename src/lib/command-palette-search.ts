@@ -47,7 +47,6 @@ export type CommandGroup = {
 const PAGE_ROUTES: { id: string; href: string }[] = [
   { id: "canvas", href: "/app/board" },
   { id: "inbox", href: "/app/inbox" },
-  { id: "automations", href: "/app/automations" },
 ];
 
 const DEFAULT_MAX = 6;

@@ -54,9 +54,11 @@ const VIEW_MODE_KEY = "julow_inbox_view_mode";
 
 function TaskTitleCell({ task }: { task: InboxTask }) {
   return (
-    <div className="min-w-[220px] py-0.5">
-      <p className="font-medium leading-snug text-julow-fg">{task.title}</p>
-      <p className="mt-0.5 line-clamp-1 text-xs text-julow-muted">
+    <div className="min-w-[200px] max-w-[26rem] py-0.5">
+      <p className="break-words font-medium leading-snug text-julow-fg">
+        {task.title}
+      </p>
+      <p className="mt-0.5 line-clamp-2 break-words text-xs text-julow-muted">
         {task.description}
       </p>
       <div className="mt-1.5 flex flex-wrap gap-1 lg:hidden">
