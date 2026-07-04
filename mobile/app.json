@@ -1,0 +1,52 @@
+{
+  "expo": {
+    "name": "Julow",
+    "slug": "julow",
+    "scheme": "julow",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "backgroundColor": "#0f0f12",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "ru.julow.app",
+      "userInterfaceStyle": "automatic"
+    },
+    "android": {
+      "package": "ru.julow.app",
+      "userInterfaceStyle": "automatic"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableProguardInReleaseBuilds": false,
+            "usesCleartextTraffic": true,
+            "newArchEnabled": true
+          },
+          "ios": {
+            "newArchEnabled": true
+          }
+        }
+      ],
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "Разрешите Julow использовать микрофон для голосового ввода.",
+          "speechRecognitionPermission": "Разрешите Julow распознавать речь для голосового ввода.",
+          "androidSpeechServicePackages": [
+            "com.google.android.googlequicksearchbox"
+          ]
+        }
+      ],
+      "expo-font",
+      "expo-status-bar"
+    ],
+    "extra": {
+      "apiUrl": "http://localhost:3000"
+    }
+  }
+}

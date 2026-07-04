@@ -1,0 +1,3936 @@
+@import "tailwindcss";
+@import "@heroui/styles";
+
+/* ─── Julow design tokens ─────────────────────────────────────────────── */
+
+:root,
+[data-theme="light"] {
+  --julow-bg: oklch(0.985 0.002 286);
+  --julow-fg: oklch(0.21 0.006 286);
+  --julow-muted: oklch(0.52 0.012 286);
+
+  --julow-gradient-1: oklch(0.82 0.12 55);
+  --julow-gradient-2: oklch(0.78 0.1 295);
+  --julow-gradient-3: oklch(0.82 0.08 245);
+
+  --julow-glass-bg: oklch(1 0 0 / 0.55);
+  --julow-glass-border: oklch(1 0 0 / 0.65);
+  --julow-glass-shadow: 0 8px 32px oklch(0.2 0.02 286 / 0.08),
+    0 1px 0 oklch(1 0 0 / 0.6) inset;
+  --julow-glass-blur: 20px;
+
+  /* Command palette dropdown — frosted, readable over page content */
+  --julow-palette-glass-bg: color-mix(in oklch, white 88%, var(--julow-bg));
+  --julow-palette-glass-blur: 16px;
+
+  --julow-cursor: oklch(0.22 0.006 286);
+  --julow-cursor-ring: oklch(0.22 0.006 286 / 0.15);
+
+  --background: var(--julow-bg);
+  --foreground: var(--julow-fg);
+  --surface: var(--julow-glass-bg);
+  --border: oklch(0 0 0 / 0.06);
+  --accent: oklch(0.55 0.18 260);
+  --accent-foreground: oklch(0.99 0 0);
+  --radius: 0.875rem;
+
+  /* Opaque surface for modals / canvas cards (no see-through). */
+  --julow-panel-solid: oklch(0.995 0.002 286);
+  --julow-panel-solid-border: oklch(0.21 0.006 286 / 0.12);
+
+  /* Form controls on solid/light surfaces — higher contrast than glass border. */
+  --julow-input-border: color-mix(in oklch, var(--julow-muted) 32%, transparent);
+  --julow-input-bg: color-mix(in oklch, white 92%, var(--julow-bg));
+  --julow-input-bg-subtle: color-mix(in oklch, white 88%, var(--julow-bg));
+}
+
+.dark,
+[data-theme="dark"] {
+  --julow-bg: oklch(0.13 0.008 286);
+  --julow-fg: oklch(0.94 0.004 286);
+  --julow-muted: oklch(0.62 0.012 286);
+
+  --julow-gradient-1: oklch(0.42 0.14 55);
+  --julow-gradient-2: oklch(0.38 0.12 295);
+  --julow-gradient-3: oklch(0.4 0.1 245);
+
+  --julow-glass-bg: oklch(1 0 0 / 0.06);
+  --julow-glass-border: oklch(1 0 0 / 0.1);
+  --julow-glass-shadow: 0 8px 40px oklch(0 0 0 / 0.45),
+    0 1px 0 oklch(1 0 0 / 0.06) inset;
+  --julow-glass-blur: 24px;
+
+  --julow-palette-glass-bg: color-mix(in oklch, var(--julow-panel-solid) 94%, var(--julow-bg));
+  --julow-palette-glass-blur: 20px;
+
+  --julow-cursor: oklch(0.94 0.004 286);
+  --julow-cursor-ring: oklch(0.94 0.004 286 / 0.2);
+
+  --background: var(--julow-bg);
+  --foreground: var(--julow-fg);
+  --surface: var(--julow-glass-bg);
+  --border: oklch(1 0 0 / 0.08);
+  --accent: oklch(0.68 0.16 260);
+  --accent-foreground: oklch(0.13 0.008 286);
+
+  /* Opaque surface for modals / canvas cards (sits clearly above the page). */
+  --julow-panel-solid: oklch(0.205 0.008 286);
+  --julow-panel-solid-border: oklch(1 0 0 / 0.12);
+
+  --julow-input-border: var(--julow-glass-border);
+  --julow-input-bg: color-mix(in oklch, var(--julow-glass-bg) 70%, transparent);
+  --julow-input-bg-subtle: color-mix(in oklch, var(--julow-glass-bg) 60%, transparent);
+}
+
+@theme inline {
+  --color-julow-bg: var(--julow-bg);
+  --color-julow-fg: var(--julow-fg);
+  --color-julow-muted: var(--julow-muted);
+  --font-sans: var(--font-inter);
+}
+
+/* ─── Base ────────────────────────────────────────────────────────────── */
+
+html {
+  scroll-behavior: smooth;
+}
+
+html.julow-cursor-active,
+html.julow-cursor-active body,
+html.julow-cursor-active a,
+html.julow-cursor-active button,
+html.julow-cursor-active input,
+html.julow-cursor-active textarea,
+html.julow-cursor-active .react-flow__pane,
+html.julow-cursor-active .react-flow__node,
+html.julow-cursor-active .react-flow__edge {
+  cursor: none !important;
+}
+
+html:has(.workspace-shell),
+html:has(.workspace-shell) body {
+  overflow: hidden;
+  height: 100%;
+  max-height: 100dvh;
+}
+
+body {
+  background: var(--julow-bg);
+  color: var(--julow-fg);
+  font-family: var(--font-inter), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background: oklch(0.55 0.18 260 / 0.25);
+}
+
+/* ─── Glass utility ───────────────────────────────────────────────────── */
+
+.glass-panel {
+  background: var(--julow-glass-bg);
+  border: 1px solid var(--julow-glass-border);
+  box-shadow: var(--julow-glass-shadow);
+  backdrop-filter: blur(var(--julow-glass-blur));
+  -webkit-backdrop-filter: blur(var(--julow-glass-blur));
+}
+
+/* ─── Gradient mesh background ────────────────────────────────────────── */
+
+.julow-gradient-bg {
+  background-color: var(--julow-bg);
+  background-image:
+    radial-gradient(
+      ellipse 80% 60% at 15% 85%,
+      color-mix(in oklch, var(--julow-gradient-1) 55%, transparent) 0%,
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse 70% 55% at 50% 15%,
+      color-mix(in oklch, var(--julow-gradient-2) 50%, transparent) 0%,
+      transparent 65%
+    ),
+    radial-gradient(
+      ellipse 65% 50% at 88% 25%,
+      color-mix(in oklch, var(--julow-gradient-3) 45%, transparent) 0%,
+      transparent 60%
+    );
+}
+
+/* ─── Workspace ───────────────────────────────────────────────────────── */
+
+/* Layout tokens also on :root so portaled overlays (vaul sheets rendered at
+   document.body, outside .workspace-shell) can resolve them. */
+:root {
+  --topbar-height: 3.5rem;
+  --bottom-nav-height: 4rem;
+  --bottom-nav-float-gap: 0.75rem;
+  --sheet-float-gap: 0.75rem;
+  --sheet-side-gap: 0.75rem;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.workspace-shell {
+  --sidebar-width: 15.5rem;
+  --panel-width: min(26rem, 100vw);
+  --rail-collapsed-width: 3rem;
+  --rail-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --rail-duration: 0.36s;
+  --topbar-height: 3.5rem;
+  --footer-height: 2.25rem;
+  --bottom-nav-height: 4rem;
+  --bottom-nav-float-gap: 0.75rem;
+  --sheet-float-gap: 0.75rem;
+  --sheet-side-gap: 0.75rem;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.workspace-shell--mobile {
+  --footer-height: 0px;
+}
+
+/* CSS-first mobile layout before JS hydrates (Tailwind lg = 1024px) */
+@media (max-width: 1023px) {
+  .workspace-shell .workspace-sidebar {
+    display: none !important;
+  }
+
+  .workspace-shell .julow-right-rail {
+    display: none !important;
+  }
+
+  .workspace-shell .workspace-desktop-footer {
+    display: none !important;
+  }
+
+  .workspace-shell .workspace-main {
+    padding-bottom: calc(
+      var(--bottom-nav-height) + var(--bottom-nav-float-gap) + var(--safe-bottom)
+    );
+  }
+
+  .workspace-shell .julow-bottom-nav {
+    display: flex;
+  }
+}
+
+/* Floating mobile bottom navigation */
+.julow-bottom-nav {
+  pointer-events: none;
+  z-index: 40;
+  justify-content: center;
+  padding-left: var(--sheet-side-gap);
+  padding-right: var(--sheet-side-gap);
+  padding-bottom: calc(var(--bottom-nav-float-gap) + var(--safe-bottom));
+  background: transparent;
+}
+
+/* Floating frosted-glass tab bar. */
+.julow-bottom-nav__dock {
+  pointer-events: auto;
+  display: flex;
+  width: 100%;
+  max-width: 100%;
+  height: var(--bottom-nav-height);
+  align-items: stretch;
+  border-radius: 1.375rem;
+  background: color-mix(in oklch, var(--julow-panel-solid) 68%, transparent);
+  border: 1px solid color-mix(in oklch, var(--julow-glass-border) 90%, transparent);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  backdrop-filter: blur(20px) saturate(1.4);
+  box-shadow: 0 12px 40px oklch(0 0 0 / 0.28);
+}
+
+@supports not (
+  (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))
+) {
+  .julow-bottom-nav__dock {
+    background: var(--julow-panel-solid);
+  }
+}
+
+/* Mobile top bar stays a solid surface (no blur). */
+.julow-mobile-solid,
+.workspace-shell--mobile .julow-mobile-topbar {
+  background: var(--julow-panel-solid);
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.julow-mobile-topbar.julow-mobile-solid {
+  box-shadow: none;
+}
+
+.julow-bottom-nav__item {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.125rem;
+  padding: 0.375rem 0.125rem;
+  border-radius: 1rem;
+  color: var(--julow-muted);
+  text-decoration: none;
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.julow-bottom-nav__item--active {
+  color: var(--accent);
+  background: color-mix(in oklch, var(--accent) 12%, transparent);
+}
+
+.julow-bottom-nav__label {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.625rem;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: 0.01em;
+}
+
+.julow-mobile-topbar {
+  position: relative;
+  z-index: 30;
+  border-bottom: 1px solid var(--julow-panel-solid-border);
+}
+
+.julow-mobile-topbar__center {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.julow-mobile-search.search-field {
+  min-width: 0;
+  flex: 1;
+}
+
+.julow-mobile-search.search-field .search-field__group {
+  height: 2rem;
+  min-height: 2rem;
+  border-radius: 9999px;
+  border-color: var(--julow-input-border);
+  background: var(--julow-input-bg-subtle);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.julow-mobile-search.search-field .search-field__search-icon {
+  margin-left: 0.625rem;
+}
+
+.julow-mobile-search.search-field .search-field__input {
+  padding-left: 0.25rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.julow-mobile-ai-btn {
+  flex-shrink: 0;
+}
+
+.julow-project-picker-trigger {
+  display: flex;
+  max-width: 9.5rem;
+  min-width: 0;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.375rem;
+  border-radius: 0.75rem;
+  padding: 0.375rem 0.5rem;
+  text-align: left;
+  transition: background-color 0.15s ease;
+}
+
+.julow-project-picker-trigger:hover,
+.julow-project-picker-trigger[aria-expanded="true"] {
+  background: var(--julow-input-bg-subtle);
+}
+
+.julow-project-picker-trigger__icon {
+  display: flex;
+  width: 1.625rem;
+  height: 1.625rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  background: color-mix(in oklch, var(--accent) 15%, transparent);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.julow-project-picker-trigger__icon--sm {
+  width: 1.5rem;
+  height: 1.5rem;
+  font-size: 0.625rem;
+}
+
+.julow-project-picker-menu {
+  background: var(--julow-panel-solid) !important;
+  border: 1px solid var(--julow-panel-solid-border) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: 0 12px 40px oklch(0 0 0 / 0.28) !important;
+}
+
+@media (min-width: 1024px) {
+  .workspace-shell .julow-bottom-nav {
+    display: none !important;
+  }
+}
+
+.julow-footer-chip {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  padding: 0.375rem;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.julow-footer-chip--success {
+  color: color-mix(in oklch, var(--success) 88%, var(--julow-fg));
+  background: color-mix(in oklch, var(--success) 12%, transparent);
+  border: 1px solid color-mix(in oklch, var(--success) 18%, transparent);
+  box-shadow: 0 1px 0 color-mix(in oklch, var(--success) 6%, transparent);
+}
+
+.julow-tip {
+  position: relative;
+}
+
+.julow-tip__bubble {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.375rem);
+  z-index: 60;
+  width: max-content;
+  max-width: 16rem;
+  padding: 0.625rem 0.75rem;
+  border-radius: 0.75rem;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-2px);
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
+}
+
+.julow-tip:hover .julow-tip__bubble,
+.julow-tip:focus-visible .julow-tip__bubble {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ─── Home section cards ──────────────────────────────────────────────── */
+
+.julow-home-card {
+  --julow-home-noise: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.72' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.45'/%3E%3C/svg%3E");
+
+  position: relative;
+  display: block;
+  overflow: hidden;
+  isolation: isolate;
+  border-radius: 1rem;
+  padding: 1.25rem;
+  background: var(--julow-glass-bg);
+  border: 1px solid var(--julow-glass-border);
+  box-shadow: var(--julow-glass-shadow);
+  backdrop-filter: blur(var(--julow-glass-blur));
+  -webkit-backdrop-filter: blur(var(--julow-glass-blur));
+  transition:
+    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.35s ease,
+    box-shadow 0.35s ease;
+}
+
+.julow-home-card__mesh,
+.julow-home-card__noise,
+.julow-home-card__glare {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.julow-home-card__mesh {
+  inset: -25%;
+  opacity: 0.55;
+  background:
+    radial-gradient(
+      ellipse 65% 55% at 18% 82%,
+      color-mix(in oklch, var(--julow-gradient-1) 38%, transparent) 0%,
+      transparent 62%
+    ),
+    radial-gradient(
+      ellipse 60% 50% at 82% 18%,
+      color-mix(in oklch, var(--julow-gradient-2) 32%, transparent) 0%,
+      transparent 58%
+    ),
+    radial-gradient(
+      ellipse 70% 60% at 52% 48%,
+      color-mix(in oklch, var(--julow-gradient-3) 24%, transparent) 0%,
+      transparent 65%
+    );
+  animation: julow-home-card-mesh-drift 22s ease-in-out infinite alternate;
+  transition: opacity 0.4s ease;
+}
+
+.julow-home-card:nth-child(2) .julow-home-card__mesh {
+  animation-delay: -6s;
+}
+
+.julow-home-card:nth-child(3) .julow-home-card__mesh {
+  animation-delay: -12s;
+}
+
+.julow-home-card:nth-child(4) .julow-home-card__mesh {
+  animation-delay: -18s;
+}
+
+.julow-home-card__noise {
+  z-index: 1;
+  opacity: 0.1;
+  mix-blend-mode: overlay;
+  background-image: var(--julow-home-noise);
+  background-size: 96px 96px;
+}
+
+.julow-home-card__glare {
+  z-index: 2;
+  opacity: 0;
+  background: radial-gradient(
+    ellipse 85% 70% at 50% 0%,
+    color-mix(in oklch, white 22%, transparent) 0%,
+    transparent 68%
+  );
+  mix-blend-mode: soft-light;
+  transition: opacity 0.4s ease;
+}
+
+.julow-home-card__content {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.julow-home-card__icon {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.75rem;
+  color: var(--julow-muted);
+  background: color-mix(in oklch, var(--julow-fg) 5%, transparent);
+  border: 1px solid color-mix(in oklch, var(--julow-fg) 8%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in oklch, white 40%, transparent);
+  transition:
+    color 0.35s ease,
+    background 0.35s ease,
+    border-color 0.35s ease,
+    box-shadow 0.35s ease,
+    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.julow-home-card__arrow {
+  opacity: 0;
+  transition:
+    opacity 0.3s ease,
+    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.julow-home-card:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in oklch, var(--accent) 18%, var(--julow-glass-border));
+  box-shadow:
+    var(--julow-glass-shadow),
+    0 12px 36px color-mix(in oklch, var(--accent) 8%, transparent);
+}
+
+.julow-home-card:hover .julow-home-card__mesh {
+  opacity: 0.72;
+}
+
+.julow-home-card:hover .julow-home-card__glare {
+  opacity: 0.65;
+}
+
+.julow-home-card:hover .julow-home-card__icon {
+  color: var(--accent);
+  background: color-mix(in oklch, var(--accent) 12%, transparent);
+  border-color: color-mix(in oklch, var(--accent) 22%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklch, white 35%, transparent),
+    0 0 0 1px color-mix(in oklch, var(--accent) 8%, transparent);
+  transform: scale(1.04);
+}
+
+.julow-home-card:hover .julow-home-card__arrow {
+  opacity: 1;
+  transform: translateX(2px);
+}
+
+.dark .julow-home-card__mesh,
+[data-theme="dark"] .julow-home-card__mesh {
+  opacity: 0.42;
+}
+
+.dark .julow-home-card__noise,
+[data-theme="dark"] .julow-home-card__noise {
+  opacity: 0.14;
+  mix-blend-mode: soft-light;
+}
+
+.dark .julow-home-card:hover .julow-home-card__mesh,
+[data-theme="dark"] .julow-home-card:hover .julow-home-card__mesh {
+  opacity: 0.58;
+}
+
+.dark .julow-home-card__icon,
+[data-theme="dark"] .julow-home-card__icon {
+  background: color-mix(in oklch, var(--julow-fg) 6%, transparent);
+  border-color: color-mix(in oklch, var(--julow-fg) 10%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in oklch, white 8%, transparent);
+}
+
+.dark .julow-home-card:hover,
+[data-theme="dark"] .julow-home-card:hover {
+  box-shadow:
+    var(--julow-glass-shadow),
+    0 14px 40px color-mix(in oklch, var(--accent) 12%, transparent);
+}
+
+@keyframes julow-home-card-mesh-drift {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    transform: translate(2.5%, -1.5%) scale(1.04);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .julow-home-card,
+  .julow-home-card__mesh,
+  .julow-home-card__icon,
+  .julow-home-card__arrow {
+    animation: none;
+    transition: none;
+  }
+
+  .julow-home-card:hover {
+    transform: none;
+  }
+}
+
+/* React Flow — match Julow glass theme */
+.julow-flow .react-flow__background {
+  background: transparent !important;
+}
+
+.julow-flow .react-flow__pane {
+  background: transparent;
+}
+
+.julow-flow .react-flow__node {
+  pointer-events: all;
+}
+
+.julow-flow .react-flow__edge-path {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.julow-flow .react-flow__edges {
+  z-index: 1;
+}
+
+.julow-flow .react-flow__nodes {
+  z-index: 2;
+}
+
+.julow-flow .react-flow__handle {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.julow-flow .react-flow__node:hover .react-flow__handle,
+.julow-flow .react-flow__node.selected .react-flow__handle {
+  opacity: 1;
+}
+
+.julow-flow .react-flow__panel {
+  margin: 0;
+}
+
+/* ─── Inbox: glass segmented tabs + table ─────────────────────────────── */
+
+.julow-inbox-tabs.tabs {
+  @apply gap-0;
+}
+
+.julow-inbox-tabs .tabs__list-container {
+  @apply w-full;
+}
+
+.julow-inbox-tabs .tabs__list {
+  width: 100%;
+  gap: 2px;
+  padding: 4px;
+  border-radius: 0.75rem;
+  background: color-mix(in oklch, var(--julow-glass-bg) 65%, transparent);
+  border: 1px solid var(--julow-glass-border);
+}
+
+.julow-inbox-tabs .tabs__tab {
+  flex: 1;
+  min-width: 0;
+  height: 2rem;
+  padding-inline: 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--julow-muted);
+}
+
+.julow-inbox-tabs .tabs__tab[data-selected="true"] {
+  color: var(--julow-fg);
+  background: var(--julow-glass-bg);
+  box-shadow: var(--julow-glass-shadow);
+}
+
+.julow-inbox-tabs .tabs__separator,
+.julow-inbox-tabs .tabs__indicator {
+  display: none;
+}
+
+/* ─── Agent panel: segmented tabs ─────────────────────────────────────── */
+
+.julow-agent-tabs.tabs {
+  @apply gap-0;
+}
+
+.julow-agent-tabs .tabs__list-container {
+  @apply w-full shrink-0;
+}
+
+.julow-agent-tabs .tabs__list {
+  width: 100%;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 9999px;
+  background: color-mix(in oklch, var(--julow-glass-bg) 70%, transparent);
+  border: 1px solid var(--julow-glass-border);
+  box-shadow: inset 0 1px 0 color-mix(in oklch, white 40%, transparent);
+}
+
+.julow-agent-tabs .tabs__tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  flex: 1;
+  min-width: 0;
+  height: 2.125rem;
+  padding-inline: 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--julow-muted);
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.julow-agent-tabs .tabs__tab[data-selected="true"] {
+  color: var(--julow-fg);
+  background: var(--julow-glass-bg);
+  box-shadow:
+    var(--julow-glass-shadow),
+    0 0 0 1px color-mix(in oklch, var(--accent) 14%, transparent);
+}
+
+.julow-agent-tabs .tabs__tab:not([data-selected="true"]) .julow-agent-tab-icon {
+  color: var(--julow-muted);
+}
+
+.julow-agent-tabs .tabs__tab[data-selected="true"] .julow-agent-tab-icon {
+  color: var(--accent);
+  opacity: 1;
+}
+
+.julow-agent-tabs .tabs__tab[data-hovered="true"]:not([data-selected="true"]) {
+  color: color-mix(in oklch, var(--julow-fg) 75%, var(--julow-muted));
+  background: color-mix(in oklch, var(--julow-glass-bg) 45%, transparent);
+}
+
+.julow-agent-tabs .tabs__tab:focus-visible {
+  outline: 2px solid color-mix(in oklch, var(--accent) 45%, transparent);
+  outline-offset: 1px;
+}
+
+.julow-agent-tabs .julow-agent-tab-icon {
+  opacity: 0.9;
+  transition: color 0.15s ease;
+}
+
+.julow-agent-tabs .tabs__separator,
+.julow-agent-tabs .tabs__indicator {
+  display: none;
+}
+
+.julow-inbox-table.table-root {
+  @apply bg-transparent;
+}
+
+.julow-inbox-table .table__scroll-container {
+  @apply scrollbar-none;
+}
+
+.julow-inbox-table .table__column {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--julow-muted);
+  background: transparent !important;
+  border-radius: 0 !important;
+}
+
+.julow-inbox-table .table__cell {
+  font-size: 0.8125rem;
+  vertical-align: middle;
+  border-bottom: 1px solid color-mix(in oklch, var(--julow-glass-border) 60%, transparent);
+}
+
+.julow-inbox-table .table__row:last-child .table__cell {
+  border-bottom: none;
+}
+
+.julow-inbox-table .table__row {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.julow-inbox-table .table__row:hover,
+.julow-inbox-table .table__row[data-hovered="true"] {
+  background: color-mix(in oklch, var(--julow-glass-bg) 50%, transparent);
+}
+
+.julow-inbox-table .table__row[data-selected="true"],
+.julow-inbox-table .table__row.julow-inbox-table__row--selected {
+  background: color-mix(in oklch, var(--accent) 8%, transparent);
+}
+
+.julow-status-chip,
+.julow-priority-chip {
+  width: fit-content;
+  max-width: 100%;
+  flex-shrink: 0;
+}
+
+.julow-status-chip .chip__label,
+.julow-priority-chip .chip__label {
+  white-space: nowrap;
+}
+
+/* ─── Inbox skeletons + content enter ─────────────────────────────────── */
+
+.julow-skeleton {
+  position: relative;
+  overflow: hidden;
+  background: color-mix(in oklch, var(--julow-muted) 18%, transparent);
+  border: 1px solid color-mix(in oklch, var(--julow-muted) 12%, transparent);
+}
+
+.julow-skeleton--round {
+  border-radius: 9999px;
+}
+
+.julow-skeleton--pill {
+  border-radius: 9999px;
+}
+
+.julow-skeleton--block {
+  border-radius: 0.75rem;
+}
+
+.julow-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 0%,
+    transparent 38%,
+    color-mix(in oklch, var(--julow-fg) 10%, transparent) 50%,
+    transparent 62%,
+    transparent 100%
+  );
+  transform: translateX(-120%);
+  animation: julow-skeleton-wave 1.85s ease-in-out infinite;
+}
+
+@keyframes julow-skeleton-wave {
+  100% {
+    transform: translateX(120%);
+  }
+}
+
+.julow-inbox-body {
+  min-height: 20rem;
+}
+
+.julow-inbox-enter {
+  animation: julow-inbox-enter 0.35s ease-out;
+}
+
+@keyframes julow-inbox-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ─── Right rail: task detail + agent (split, compress) ───────────────── */
+
+.julow-right-rail {
+  display: flex;
+  flex-direction: row;
+  flex-shrink: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ── Task slot ── */
+
+.julow-right-rail__task-slot {
+  flex-shrink: 0;
+  width: 0;
+  overflow: hidden;
+  opacity: 0;
+  border-right: 1px solid transparent;
+  transition:
+    width var(--rail-duration) var(--rail-ease),
+    opacity calc(var(--rail-duration) * 0.75) var(--rail-ease),
+    border-color var(--rail-duration) var(--rail-ease);
+}
+
+.julow-right-rail--task-slot-open .julow-right-rail__task-slot {
+  width: var(--panel-width);
+  opacity: 1;
+  border-right-color: color-mix(in oklch, var(--julow-glass-border) 70%, transparent);
+}
+
+.julow-right-rail__task-inner {
+  display: flex;
+  flex-direction: column;
+  width: var(--panel-width);
+  min-width: var(--panel-width);
+  height: 100%;
+  transform: translateX(-0.75rem);
+  opacity: 0;
+  transition:
+    transform calc(var(--rail-duration) * 0.9) var(--rail-ease),
+    opacity calc(var(--rail-duration) * 0.85) var(--rail-ease);
+  transition-delay: 0s;
+}
+
+.julow-right-rail--task-open:not(.julow-right-rail--task-closing) .julow-right-rail__task-inner {
+  opacity: 0;
+  transform: translateX(-0.75rem);
+}
+
+.julow-right-rail--task-slot-open.julow-right-rail--task-ready:not(.julow-right-rail--task-closing) .julow-right-rail__task-inner {
+  transform: translateX(0);
+  opacity: 1;
+  transition-delay: 0s;
+}
+
+.julow-right-rail--task-closing.julow-right-rail--task-exit-left .julow-right-rail__task-slot {
+  width: 0;
+  opacity: 0;
+  transition-delay: 0s;
+}
+
+.julow-right-rail--task-closing.julow-right-rail--task-exit-left .julow-right-rail__task-inner {
+  transform: translateX(-1.25rem);
+  opacity: 0;
+  transition-delay: 0s;
+}
+
+.julow-right-rail--task-closing.julow-right-rail--task-exit-right .julow-right-rail__task-slot {
+  width: var(--panel-width);
+  opacity: 1;
+  transition:
+    width calc(var(--rail-duration) * 0.85) var(--rail-ease) 0.1s,
+    opacity calc(var(--rail-duration) * 0.5) var(--rail-ease) 0.08s,
+    border-color calc(var(--rail-duration) * 0.85) var(--rail-ease) 0.1s;
+}
+
+.julow-right-rail--task-closing.julow-right-rail--task-exit-right .julow-right-rail__task-inner {
+  transform: translateX(calc(var(--panel-width) * 0.38));
+  opacity: 0;
+  transition-delay: 0s;
+}
+
+.julow-right-rail--task-swapping .julow-right-rail__task-inner {
+  animation: julow-task-swap 0.22s var(--rail-ease) both;
+}
+
+@keyframes julow-task-swap {
+  from {
+    opacity: 0.45;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Agent slot (fixed inner width — never squishes content) ── */
+
+.julow-right-rail__agent-slot {
+  position: relative;
+  flex-shrink: 0;
+  width: var(--rail-collapsed-width);
+  height: 100%;
+  overflow: hidden;
+  transition: width var(--rail-duration) var(--rail-ease);
+}
+
+.julow-right-rail__agent-slot--wide {
+  width: var(--panel-width);
+}
+
+.julow-right-rail--task-open .julow-right-rail__agent-slot {
+  width: var(--rail-collapsed-width);
+}
+
+.julow-agent-slot__clip {
+  position: relative;
+  width: var(--panel-width);
+  height: 100%;
+  overflow: hidden;
+}
+
+.julow-agent-slot__strip {
+  position: absolute;
+  inset: 0 auto 0 0;
+  z-index: 3;
+  width: var(--rail-collapsed-width);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 0.1s var(--rail-ease),
+    visibility 0s linear 0.1s;
+}
+
+.julow-agent-slot__strip.is-visible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition:
+    opacity calc(var(--rail-duration) * 0.35) var(--rail-ease),
+    visibility 0s linear 0s;
+}
+
+.julow-right-rail--agent-revealed:not(.julow-right-rail--task-open) .julow-agent-slot__strip {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.julow-agent-slot__full {
+  width: var(--panel-width);
+  height: 100%;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(0.375rem);
+  pointer-events: none;
+  transition:
+    opacity calc(var(--rail-duration) * 0.85) var(--rail-ease),
+    transform calc(var(--rail-duration) * 0.85) var(--rail-ease),
+    visibility 0s linear calc(var(--rail-duration) * 0.85);
+}
+
+.julow-right-rail--agent-revealed .julow-agent-slot__full {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0);
+  pointer-events: auto;
+  transition:
+    opacity calc(var(--rail-duration) * 0.85) var(--rail-ease) calc(var(--rail-duration) * 0.08),
+    transform calc(var(--rail-duration) * 0.85) var(--rail-ease) calc(var(--rail-duration) * 0.08),
+    visibility 0s linear calc(var(--rail-duration) * 0.08);
+}
+
+.julow-right-rail--agent-expanding.julow-right-rail--agent-revealed .julow-agent-slot__full {
+  transition:
+    opacity calc(var(--rail-duration) * 0.85) var(--rail-ease) calc(var(--rail-duration) * 0.1),
+    transform calc(var(--rail-duration) * 0.85) var(--rail-ease) calc(var(--rail-duration) * 0.1),
+    visibility 0s linear calc(var(--rail-duration) * 0.1);
+}
+
+.julow-right-rail--task-open:not(.julow-right-rail--task-closing) .julow-agent-slot__full {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(0.25rem);
+  pointer-events: none;
+  transition:
+    opacity calc(var(--rail-duration) * 0.35) var(--rail-ease),
+    transform calc(var(--rail-duration) * 0.35) var(--rail-ease),
+    visibility 0s linear calc(var(--rail-duration) * 0.35);
+}
+
+.julow-agent-slot__full .julow-agent-panel-full__header,
+.julow-agent-slot__full .julow-agent-tabs .tabs__list-container {
+  opacity: 1;
+  transform: none;
+  transition: none;
+}
+
+/* ─── Agent strip (minimal rail during task view) ─────────────────────── */
+
+.julow-agent-strip {
+  gap: 0.5rem;
+}
+
+.julow-agent-strip--during-task {
+  justify-content: flex-start;
+  padding-top: 0.875rem;
+}
+
+.julow-agent-strip__launcher {
+  box-shadow:
+    0 0 0 1px color-mix(in oklch, var(--accent) 28%, transparent),
+    0 4px 14px color-mix(in oklch, var(--accent) 18%, transparent);
+  transition:
+    transform 0.22s var(--rail-ease),
+    box-shadow 0.22s var(--rail-ease);
+}
+
+.julow-agent-strip__launcher[data-hovered="true"],
+.julow-agent-strip__launcher:hover {
+  transform: scale(1.06);
+  box-shadow:
+    0 0 0 1px color-mix(in oklch, var(--accent) 40%, transparent),
+    0 6px 20px color-mix(in oklch, var(--accent) 24%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .julow-right-rail__task-slot,
+  .julow-right-rail__task-inner,
+  .julow-right-rail__agent-slot,
+  .julow-agent-slot__strip,
+  .julow-agent-slot__full,
+  .julow-agent-panel-full__header,
+  .julow-right-rail--agent-revealed .julow-agent-tabs .tabs__list-container {
+    transition: none;
+    animation: none;
+    transform: none;
+  }
+
+  .julow-right-rail--task-open .julow-right-rail__task-inner,
+  .julow-right-rail--task-slot-open .julow-right-rail__task-inner {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ─── Task detail panel (workspace sidebar) ─────────────────────────────── */
+
+.julow-task-detail-panel {
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  width: min(100%, 26rem);
+  min-width: 0;
+  height: 100%;
+  border-radius: 0;
+  border-top: 0;
+  border-right: 0;
+  border-bottom: 0;
+  border-left: 1px solid var(--julow-glass-border);
+  box-shadow: -8px 0 32px color-mix(in oklch, black 6%, transparent);
+}
+
+.julow-task-detail-panel--embedded {
+  width: 100%;
+  border-left: 0;
+  box-shadow: none;
+}
+
+/* Pinned header: status chips + the primary "Complete" action stay on top. */
+.julow-task-detail-panel__header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  flex-shrink: 0;
+  border-bottom: 1px solid color-mix(in oklch, var(--julow-glass-border) 70%, transparent);
+  padding: 0.875rem 1rem;
+  background: color-mix(in oklch, var(--julow-glass-bg) 60%, transparent);
+}
+
+.julow-task-detail-panel__header-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.julow-task-detail-panel__scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+/* The per-task conversation occupies a stable region at the panel bottom. */
+.julow-task-detail-panel__chat {
+  flex-shrink: 0;
+  height: clamp(15rem, 38vh, 24rem);
+  min-height: 0;
+  border-top: 1px solid color-mix(in oklch, var(--julow-glass-border) 70%, transparent);
+}
+
+.julow-task-detail-panel__footer {
+  border-top: 1px solid color-mix(in oklch, var(--julow-glass-border) 70%, transparent);
+  padding: 0.875rem 1rem 1rem;
+}
+
+/* Agents-on-task brief list */
+.julow-task-detail__agents-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.julow-task-detail__brief-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: 0.6rem;
+  border: 1px solid color-mix(in oklch, var(--accent) 30%, transparent);
+  background: color-mix(in oklch, var(--accent) 8%, transparent);
+  padding: 0.2rem 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--accent);
+  transition: background-color 0.15s ease;
+}
+
+.julow-task-detail__brief-add:hover {
+  background: color-mix(in oklch, var(--accent) 14%, transparent);
+}
+
+.julow-task-detail__agents-empty {
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--julow-muted);
+}
+
+.julow-task-detail__agents {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.julow-task-agent-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid color-mix(in oklch, var(--julow-glass-border) 75%, transparent);
+  background: color-mix(in oklch, var(--julow-glass-bg) 40%, transparent);
+  padding: 0.45rem 0.6rem;
+  text-align: left;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.julow-task-agent-row:hover {
+  border-color: color-mix(in oklch, var(--accent) 35%, transparent);
+  background: color-mix(in oklch, var(--julow-glass-bg) 60%, transparent);
+}
+
+.julow-task-agent-row__edit {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--julow-muted);
+}
+
+.julow-task-agent-row:hover .julow-task-agent-row__edit {
+  color: var(--accent);
+}
+
+.julow-task-detail__section {
+  margin-top: 1.25rem;
+}
+
+.julow-task-detail__label {
+  margin-bottom: 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--julow-muted);
+}
+
+.julow-task-detail__status-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.375rem;
+}
+
+@media (min-width: 400px) {
+  .julow-task-detail__status-row {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.julow-task-detail__status-btn,
+.julow-task-detail__priority-btn {
+  border-radius: 0.625rem;
+  border: 1px solid color-mix(in oklch, var(--julow-glass-border) 80%, transparent);
+  background: color-mix(in oklch, var(--julow-glass-bg) 45%, transparent);
+  padding: 0.4375rem 0.625rem;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--julow-muted);
+  text-transform: capitalize;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.julow-task-detail__status-btn:hover,
+.julow-task-detail__priority-btn:hover {
+  border-color: color-mix(in oklch, var(--julow-muted) 30%, transparent);
+  color: var(--julow-fg);
+}
+
+.julow-task-detail__status-btn--active,
+.julow-task-detail__priority-btn--active {
+  border-color: color-mix(in oklch, var(--accent) 35%, transparent);
+  background: color-mix(in oklch, var(--accent) 10%, var(--julow-glass-bg));
+  color: var(--accent);
+}
+
+.julow-task-detail__meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.625rem;
+  margin-top: 1.25rem;
+}
+
+.julow-task-detail__meta-item {
+  display: flex;
+  gap: 0.625rem;
+  border-radius: 0.75rem;
+  border: 1px solid color-mix(in oklch, var(--julow-glass-border) 75%, transparent);
+  background: color-mix(in oklch, var(--julow-glass-bg) 40%, transparent);
+  padding: 0.625rem 0.75rem;
+}
+
+:root:not(.dark) .julow-task-detail__meta-item,
+[data-theme="light"] .julow-task-detail__meta-item {
+  background: color-mix(in oklch, white 65%, var(--julow-bg));
+}
+
+.dark .julow-task-detail__meta-item,
+[data-theme="dark"] .julow-task-detail__meta-item {
+  background: color-mix(in oklch, var(--julow-glass-bg) 80%, var(--julow-bg));
+}
+
+.julow-task-detail__assignee {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  border-radius: 0.75rem;
+  border: 1px solid color-mix(in oklch, var(--julow-glass-border) 75%, transparent);
+  background: color-mix(in oklch, var(--julow-glass-bg) 35%, transparent);
+  padding: 0.5rem 0.625rem;
+}
+
+/* ─── Inbox: assignee avatar stack ────────────────────────────────────── */
+
+.julow-assignee-avatar.avatar {
+  box-shadow: 0 0 0 1px color-mix(in oklch, var(--julow-muted) 14%, var(--julow-bg));
+}
+
+/* ─── Agent gradient orbs ───────────────────────────────────────────── */
+
+.julow-agent-orb {
+  --julow-orb-noise: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.72' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.45'/%3E%3C/svg%3E");
+  --orb-base: oklch(0.55 0.1 260);
+  --orb-shift-x: 0px;
+  --orb-shift-y: 0px;
+  --orb-tilt-x: 0deg;
+  --orb-tilt-y: 0deg;
+  --orb-glare-x: 50%;
+  --orb-glare-y: 38%;
+  --orb-scale: 1;
+
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  isolation: isolate;
+  border-radius: 9999px;
+  background: var(--orb-base);
+  perspective: 420px;
+  transform: scale(var(--orb-scale));
+  box-shadow:
+    0 0 0 1px color-mix(in oklch, black 8%, transparent),
+    inset 0 1px 0 color-mix(in oklch, white 24%, transparent),
+    inset 0 -1px 0 color-mix(in oklch, black 10%, transparent),
+    0 2px 6px color-mix(in oklch, black 6%, transparent);
+  transition:
+    transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.4s ease;
+}
+
+.julow-agent-orb:hover {
+  --orb-scale: 1.05;
+  box-shadow:
+    0 0 0 1px color-mix(in oklch, black 10%, transparent),
+    inset 0 1px 0 color-mix(in oklch, white 30%, transparent),
+    inset 0 -1px 0 color-mix(in oklch, black 12%, transparent),
+    0 4px 12px color-mix(in oklch, black 10%, transparent);
+}
+
+.julow-agent-orb__inner {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  transform: rotateX(var(--orb-tilt-x)) rotateY(var(--orb-tilt-y));
+  transform-style: preserve-3d;
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+.julow-agent-orb__surface,
+.julow-agent-orb__mesh,
+.julow-agent-orb__glare,
+.julow-agent-orb__noise {
+  position: absolute;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.julow-agent-orb__surface {
+  inset: -18%;
+  transform: translate(
+    calc(var(--orb-shift-x) * 0.55),
+    calc(var(--orb-shift-y) * 0.55)
+  );
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.julow-agent-orb__mesh {
+  inset: -10%;
+  opacity: 0.85;
+  mix-blend-mode: soft-light;
+  transform: translate(
+    calc(var(--orb-shift-x) * 0.3),
+    calc(var(--orb-shift-y) * 0.3)
+  );
+  transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.julow-agent-orb:hover .julow-agent-orb__mesh {
+  opacity: 1;
+}
+
+.julow-agent-orb__glare {
+  inset: 0;
+  background: radial-gradient(
+    circle at var(--orb-glare-x) var(--orb-glare-y),
+    color-mix(in oklch, white 18%, transparent) 0%,
+    transparent 62%
+  );
+  opacity: 0.5;
+  mix-blend-mode: soft-light;
+  transition:
+    opacity 0.35s ease,
+    background 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.julow-agent-orb:hover .julow-agent-orb__glare {
+  opacity: 0.82;
+}
+
+.julow-agent-orb__glare--muted {
+  background: radial-gradient(
+    circle at var(--orb-glare-x) var(--orb-glare-y),
+    color-mix(in oklch, white 10%, transparent) 0%,
+    transparent 58%
+  );
+}
+
+.julow-agent-orb__noise {
+  inset: 0;
+  opacity: 0.14;
+  mix-blend-mode: soft-light;
+  background-image: var(--julow-orb-noise);
+  background-size: 88px 88px;
+}
+
+.julow-agent-orb--sm .julow-agent-orb__noise {
+  opacity: 0.08;
+  background-size: 112px 112px;
+}
+
+.julow-agent-orb--md .julow-agent-orb__noise {
+  opacity: 0.11;
+}
+
+.julow-agent-orb--lg .julow-agent-orb__noise {
+  opacity: 0.14;
+}
+
+.julow-agent-orb__label {
+  position: relative;
+  z-index: 2;
+}
+
+.julow-agent-orb.julow-assignee-avatar {
+  box-shadow:
+    0 0 0 1px color-mix(in oklch, var(--julow-muted) 10%, var(--julow-bg)),
+    inset 0 1px 0 color-mix(in oklch, white 18%, transparent),
+    0 1px 3px color-mix(in oklch, black 4%, transparent);
+}
+
+.julow-agent-orb--sm {
+  width: 2rem;
+  height: 2rem;
+}
+
+.julow-agent-orb--md {
+  width: 2.5rem;
+  height: 2.5rem;
+}
+
+.julow-agent-orb--lg {
+  width: 3rem;
+  height: 3rem;
+}
+
+.julow-agent-orb--overflow .julow-agent-orb__surface {
+  background:
+    radial-gradient(circle at 28% 22%, oklch(0.5 0.01 286) 0%, transparent 54%),
+    radial-gradient(circle at 76% 78%, oklch(0.42 0.01 286) 0%, transparent 52%),
+    radial-gradient(ellipse 130% 95% at 48% 58%, oklch(0.38 0.01 286) 0%, transparent 64%),
+    radial-gradient(circle at 50% 110%, oklch(0.32 0.01 286) 0%, oklch(0.38 0.01 286) 78%);
+}
+
+.julow-agent-orb--overflow .julow-agent-orb__mesh {
+  background:
+    radial-gradient(at 30% 24%, oklch(0.46 0.012 286 / 0.22) 0px, transparent 50%),
+    radial-gradient(at 68% 72%, oklch(0.4 0.01 286 / 0.18) 0px, transparent 48%);
+}
+
+.julow-agent-orb--overflow {
+  color: oklch(0.94 0.004 286);
+  font-size: 0.625rem;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.dark .julow-agent-orb__noise,
+[data-theme="dark"] .julow-agent-orb__noise {
+  opacity: 0.1;
+  mix-blend-mode: overlay;
+}
+
+.dark .julow-agent-orb--sm .julow-agent-orb__noise,
+[data-theme="dark"] .julow-agent-orb--sm .julow-agent-orb__noise {
+  opacity: 0.06;
+}
+
+.dark .julow-agent-orb--overflow .julow-agent-orb__surface,
+[data-theme="dark"] .julow-agent-orb--overflow .julow-agent-orb__surface {
+  background:
+    radial-gradient(circle at 28% 22%, oklch(0.44 0.012 286) 0%, transparent 54%),
+    radial-gradient(circle at 76% 78%, oklch(0.36 0.01 286) 0%, transparent 52%),
+    radial-gradient(ellipse 130% 95% at 48% 58%, oklch(0.32 0.01 286) 0%, transparent 64%),
+    radial-gradient(circle at 50% 110%, oklch(0.28 0.01 286) 0%, oklch(0.34 0.01 286) 78%);
+}
+
+.dark .julow-agent-orb--overflow,
+[data-theme="dark"] .julow-agent-orb--overflow {
+  color: oklch(0.9 0.004 286);
+}
+
+.julow-automation-rule {
+  border-radius: 1rem;
+}
+
+.julow-automation-flow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 0.625rem;
+  align-items: stretch;
+}
+
+.julow-automation-flow__step {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding: 0.75rem 0.875rem;
+  border-radius: 0.75rem;
+  border: 1px solid color-mix(in oklch, var(--julow-glass-border) 80%, transparent);
+  background: color-mix(in oklch, var(--julow-glass-bg) 50%, transparent);
+}
+
+.julow-automation-flow__label {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--julow-muted);
+}
+
+.julow-automation-flow__value {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--julow-fg);
+}
+
+.julow-automation-flow__connector {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  width: 1.75rem;
+  color: color-mix(in oklch, var(--julow-muted) 65%, transparent);
+}
+
+:root:not(.dark) .julow-automation-flow__step,
+[data-theme="light"] .julow-automation-flow__step {
+  border-color: color-mix(in oklch, var(--julow-muted) 12%, transparent);
+  background: color-mix(in oklch, white 70%, var(--julow-bg));
+}
+
+.dark .julow-automation-flow__step,
+[data-theme="dark"] .julow-automation-flow__step {
+  border-color: color-mix(in oklch, var(--julow-glass-border) 90%, transparent);
+  background: color-mix(in oklch, var(--julow-glass-bg) 85%, var(--julow-bg));
+}
+
+@media (max-width: 639px) {
+  .julow-automation-flow {
+    grid-template-columns: 1fr;
+  }
+
+  .julow-automation-flow__connector {
+    width: auto;
+    height: 1.25rem;
+    transform: rotate(90deg);
+  }
+}
+
+/* Legacy step styles — deadline cards */
+.julow-automation-step {
+  border-radius: 0.75rem;
+  border: 1px solid var(--julow-glass-border);
+  background: color-mix(in oklch, var(--julow-glass-bg) 45%, transparent);
+  padding: 0.625rem 0.75rem;
+}
+
+.julow-automation-step__label {
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--julow-muted);
+}
+
+.julow-automation-step__value {
+  margin-top: 0.25rem;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--julow-fg);
+}
+
+:root:not(.dark) .julow-automation-step,
+[data-theme="light"] .julow-automation-step {
+  border-color: color-mix(in oklch, var(--julow-muted) 28%, transparent);
+  background: color-mix(in oklch, white 88%, var(--julow-bg));
+}
+
+.dark .julow-automation-step,
+[data-theme="dark"] .julow-automation-step {
+  border-color: color-mix(in oklch, var(--julow-glass-border) 85%, transparent);
+  background: color-mix(in oklch, var(--julow-glass-bg) 80%, var(--julow-bg));
+}
+
+/* ─── Avatar status indicators ────────────────────────────────────────── */
+
+.julow-avatar-wrap {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+  line-height: 0;
+  vertical-align: middle;
+}
+
+.julow-avatar-status {
+  position: absolute;
+  z-index: 1;
+  border-radius: 9999px;
+  box-shadow: 0 0 0 1.5px var(--julow-bg);
+  pointer-events: none;
+}
+
+.julow-avatar-status--sm {
+  right: 0;
+  bottom: 0;
+  width: 0.4375rem;
+  height: 0.4375rem;
+  transform: translate(18%, 18%);
+}
+
+.julow-avatar-status--md {
+  right: 1px;
+  bottom: 1px;
+  width: 0.5625rem;
+  height: 0.5625rem;
+  transform: translate(12%, 12%);
+  box-shadow: 0 0 0 2px var(--julow-bg);
+}
+
+.julow-avatar-status--lg {
+  right: 1px;
+  bottom: 1px;
+  width: 0.625rem;
+  height: 0.625rem;
+  transform: translate(10%, 10%);
+  box-shadow: 0 0 0 2px var(--julow-bg);
+}
+
+.julow-avatar-status--online,
+.julow-avatar-status--live {
+  background: var(--success);
+}
+
+.julow-avatar-status--busy {
+  background: var(--accent);
+}
+
+.julow-avatar-status--idle {
+  background: color-mix(in oklch, var(--julow-muted) 88%, var(--julow-bg));
+}
+
+.julow-avatar-status--offline {
+  background: var(--warning);
+}
+
+/* ─── Inbox: view toggle + kanban ─────────────────────────────────────── */
+
+.julow-view-toggle.toggle-button-group {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  height: 2rem;
+  gap: 1px;
+  padding: 2px;
+  border-radius: 9999px;
+  border: 1px solid color-mix(in oklch, var(--julow-glass-border) 85%, transparent);
+  background: color-mix(in oklch, var(--julow-glass-bg) 50%, transparent);
+}
+
+.julow-view-toggle .toggle-button {
+  width: 1.75rem !important;
+  min-width: 1.75rem !important;
+  height: 1.75rem !important;
+  border-radius: 9999px !important;
+  background: transparent !important;
+  color: var(--julow-muted) !important;
+  box-shadow: none !important;
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.julow-view-toggle .toggle-button svg {
+  color: inherit;
+  width: 0.875rem !important;
+  height: 0.875rem !important;
+}
+
+@media (hover: hover) {
+  .julow-view-toggle .toggle-button:hover:not([data-selected="true"]),
+  .julow-view-toggle .toggle-button[data-hovered="true"]:not([data-selected="true"]) {
+    background: color-mix(in oklch, var(--julow-glass-bg) 45%, transparent) !important;
+    color: var(--julow-fg) !important;
+  }
+}
+
+.julow-view-toggle .toggle-button[data-selected="true"] {
+  background: color-mix(in oklch, var(--julow-glass-bg) 88%, transparent) !important;
+  color: var(--accent) !important;
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklch, white 30%, transparent),
+    0 0 0 1px color-mix(in oklch, var(--accent) 14%, transparent) !important;
+}
+
+@media (hover: hover) {
+  .julow-view-toggle .toggle-button[data-selected="true"]:hover,
+  .julow-view-toggle .toggle-button[data-selected="true"][data-hovered="true"] {
+    background: color-mix(in oklch, var(--julow-glass-bg) 92%, transparent) !important;
+  }
+}
+
+.julow-view-toggle .toggle-button:active,
+.julow-view-toggle .toggle-button[data-pressed="true"] {
+  transform: none !important;
+}
+
+.julow-kanban-board {
+  min-height: 420px;
+}
+
+.julow-kanban-column {
+  backdrop-filter: blur(8px);
+}
+
+.julow-kanban-card {
+  border: 1px solid color-mix(in oklch, var(--julow-glass-border) 80%, transparent);
+}
+
+.julow-kanban-card:hover {
+  border-color: color-mix(in oklch, var(--accent) 25%, var(--julow-glass-border));
+}
+
+/* ─── Agent chat composer ─────────────────────────────────────────────── */
+
+.julow-suggestion-strip {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  padding-inline: 2px;
+  scroll-padding-inline: 4px;
+  /* Fade only the trailing edge so the first chip stays fully visible */
+  mask-image: linear-gradient(
+    to right,
+    black 0,
+    black calc(100% - 14px),
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to right,
+    black 0,
+    black calc(100% - 14px),
+    transparent 100%
+  );
+}
+
+.julow-suggestion-strip:focus-visible {
+  outline: 2px solid color-mix(in oklch, var(--accent) 40%, transparent);
+  outline-offset: 2px;
+  border-radius: 0.5rem;
+}
+
+.julow-suggestion-chip {
+  flex-shrink: 0;
+  border-radius: 9999px;
+  border: 1px solid color-mix(in oklch, var(--julow-muted) 48%, var(--julow-glass-border));
+  background: color-mix(in oklch, var(--julow-glass-bg) 88%, transparent);
+  padding: 0.375rem 0.75rem;
+  font-size: 0.6875rem;
+  line-height: 1.35;
+  font-weight: 500;
+  color: var(--julow-muted);
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.1s ease;
+}
+
+.julow-suggestion-chip:hover {
+  border-color: color-mix(in oklch, var(--julow-muted) 62%, var(--julow-fg));
+  color: var(--julow-fg);
+  background: color-mix(in oklch, var(--julow-glass-bg) 95%, transparent);
+}
+
+.julow-suggestion-chip:active {
+  transform: scale(0.98);
+}
+
+.julow-suggestion-chip[data-selected="true"] {
+  border-color: color-mix(in oklch, var(--accent) 50%, var(--julow-muted));
+  background: color-mix(in oklch, var(--accent) 10%, var(--julow-glass-bg));
+  color: var(--julow-fg);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in oklch, var(--accent) 18%, transparent),
+    0 1px 2px color-mix(in oklch, var(--accent) 8%, transparent);
+}
+
+.julow-suggestion-chip:focus-visible {
+  outline: 2px solid color-mix(in oklch, var(--accent) 45%, transparent);
+  outline-offset: 2px;
+}
+
+.julow-chat-composer {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.375rem;
+  padding: 0.3125rem 0.3125rem 0.3125rem 0.625rem;
+  border-radius: 0.875rem;
+  border: 1px solid color-mix(in oklch, var(--julow-muted) 24%, var(--julow-glass-border));
+  background: color-mix(in oklch, var(--julow-glass-bg) 82%, transparent);
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+:root:not(.dark) .julow-chat-composer,
+[data-theme="light"] .julow-chat-composer {
+  border-color: color-mix(in oklch, var(--julow-muted) 44%, transparent);
+  background: color-mix(in oklch, white 92%, var(--julow-bg));
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklch, white 75%, transparent),
+    0 1px 2px color-mix(in oklch, var(--julow-muted) 10%, transparent);
+}
+
+.dark .julow-chat-composer,
+[data-theme="dark"] .julow-chat-composer {
+  border-color: color-mix(in oklch, var(--julow-glass-border) 85%, transparent);
+  background: color-mix(in oklch, var(--julow-glass-bg) 100%, var(--julow-bg));
+  box-shadow: inset 0 1px 0 color-mix(in oklch, white 4%, transparent);
+}
+
+.julow-chat-composer:focus-within {
+  border-color: color-mix(in oklch, var(--accent) 30%, var(--julow-muted) 22%);
+}
+
+:root:not(.dark) .julow-chat-composer:focus-within,
+[data-theme="light"] .julow-chat-composer:focus-within {
+  border-color: color-mix(in oklch, var(--accent) 38%, var(--julow-muted) 32%);
+  background: white;
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklch, white 85%, transparent),
+    0 0 0 1px color-mix(in oklch, var(--accent) 10%, transparent);
+}
+
+.dark .julow-chat-composer:focus-within,
+[data-theme="dark"] .julow-chat-composer:focus-within {
+  border-color: color-mix(in oklch, var(--accent) 35%, var(--julow-glass-border));
+  background: color-mix(
+    in oklch,
+    var(--julow-glass-bg) 100%,
+    color-mix(in oklch, white 6%, var(--julow-bg))
+  );
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklch, white 5%, transparent),
+    0 0 0 1px color-mix(in oklch, var(--accent) 12%, transparent);
+}
+
+.julow-chat-composer__input,
+.julow-chat-composer__input.textarea,
+.julow-chat-composer textarea {
+  flex: 1;
+  min-width: 0;
+  min-height: 1.75rem;
+  max-height: 7.5rem;
+  resize: none;
+  border: 0;
+  background: transparent;
+  padding: 0.375rem 0.25rem 0.375rem 0.125rem;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--julow-fg);
+  box-shadow: none;
+  field-sizing: content;
+  overflow-y: auto;
+}
+
+.julow-chat-composer__input::placeholder,
+.julow-chat-composer textarea::placeholder {
+  color: color-mix(in oklch, var(--julow-muted) 88%, transparent);
+}
+
+.julow-chat-composer__input:focus,
+.julow-chat-composer textarea:focus {
+  outline: none;
+}
+
+.julow-chat-composer__send {
+  flex-shrink: 0;
+  width: 1.75rem !important;
+  min-width: 1.75rem !important;
+  height: 1.75rem !important;
+  margin-top: 0.1875rem;
+  border-radius: 9999px !important;
+  box-shadow: none !important;
+}
+
+.julow-chat-composer__send:disabled {
+  opacity: 0.4;
+}
+
+.julow-chat-system {
+  border: 1px solid color-mix(in oklch, var(--julow-glass-border) 80%, transparent);
+  border-left: 2px solid color-mix(in oklch, var(--success) 45%, var(--julow-muted));
+}
+
+/* ─── Workspace topbar: ghost search ──────────────────────────────────── */
+
+.julow-topbar-search.search-field .search-field__group {
+  height: 2.25rem;
+  border-radius: 9999px;
+  border-color: transparent;
+  background: color-mix(in oklch, var(--julow-glass-bg) 28%, transparent);
+  box-shadow: none;
+}
+
+@media (hover: hover) {
+  .julow-topbar-search.search-field .search-field__group:hover:not(:focus-within),
+  .julow-topbar-search.search-field .search-field__group[data-hovered="true"]:not([data-focus-within="true"]) {
+    background: color-mix(in oklch, var(--julow-glass-bg) 48%, transparent);
+    border-color: color-mix(in oklch, var(--julow-glass-border) 70%, transparent);
+  }
+}
+
+.julow-topbar-search.search-field .search-field__group:focus-within,
+.julow-topbar-search.search-field .search-field__group[data-focus-within="true"] {
+  background: color-mix(in oklch, var(--julow-glass-bg) 62%, transparent);
+  border-color: color-mix(in oklch, var(--accent) 22%, var(--julow-glass-border));
+  box-shadow: none;
+}
+
+.julow-topbar-search.search-field .search-field__search-icon {
+  margin-left: 0.875rem;
+  color: color-mix(in oklch, var(--julow-muted) 90%, transparent);
+}
+
+.julow-topbar-search.search-field .search-field__input {
+  padding-left: 0.375rem;
+  padding-right: 0.25rem;
+  font-size: 0.8125rem;
+  color: var(--julow-fg);
+}
+
+.julow-topbar-search.search-field .search-field__input::placeholder {
+  color: color-mix(in oklch, var(--julow-muted) 88%, transparent);
+}
+
+.julow-topbar-search__kbd {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  margin-right: 0.625rem;
+  border-radius: 0.375rem;
+  border: 1px solid color-mix(in oklch, var(--julow-glass-border) 75%, transparent);
+  background: color-mix(in oklch, var(--julow-glass-bg) 55%, transparent);
+  padding: 0.125rem 0.375rem;
+  font-size: 0.625rem;
+  font-weight: 500;
+  line-height: 1;
+  color: color-mix(in oklch, var(--julow-muted) 92%, transparent);
+  pointer-events: none;
+}
+
+/* Dark: faint fill + contour so the field reads against the topbar */
+.dark .julow-topbar-search.search-field .search-field__group,
+[data-theme="dark"] .julow-topbar-search.search-field .search-field__group {
+  border-color: color-mix(in oklch, var(--julow-glass-border) 72%, transparent);
+  background: color-mix(in oklch, var(--julow-glass-bg) 100%, var(--julow-bg));
+  box-shadow: inset 0 1px 0 color-mix(in oklch, white 5%, transparent);
+}
+
+@media (hover: hover) {
+  .dark .julow-topbar-search.search-field .search-field__group:hover:not(:focus-within),
+  .dark .julow-topbar-search.search-field .search-field__group[data-hovered="true"]:not([data-focus-within="true"]),
+  [data-theme="dark"] .julow-topbar-search.search-field .search-field__group:hover:not(:focus-within),
+  [data-theme="dark"] .julow-topbar-search.search-field .search-field__group[data-hovered="true"]:not([data-focus-within="true"]) {
+    background: color-mix(in oklch, var(--julow-glass-bg) 100%, color-mix(in oklch, white 6%, var(--julow-bg)));
+    border-color: color-mix(in oklch, var(--julow-glass-border) 90%, transparent);
+  }
+}
+
+.dark .julow-topbar-search.search-field .search-field__group:focus-within,
+.dark .julow-topbar-search.search-field .search-field__group[data-focus-within="true"],
+[data-theme="dark"] .julow-topbar-search.search-field .search-field__group:focus-within,
+[data-theme="dark"] .julow-topbar-search.search-field .search-field__group[data-focus-within="true"] {
+  background: color-mix(in oklch, var(--julow-glass-bg) 100%, color-mix(in oklch, white 9%, var(--julow-bg)));
+  border-color: color-mix(in oklch, var(--accent) 24%, var(--julow-glass-border));
+}
+
+.dark .julow-topbar-search__kbd,
+[data-theme="dark"] .julow-topbar-search__kbd {
+  border-color: color-mix(in oklch, var(--julow-glass-border) 85%, transparent);
+  background: color-mix(in oklch, var(--julow-glass-bg) 80%, var(--julow-bg));
+}
+
+/* Light: soft inset so the field doesn't disappear on pale glass */
+:root:not(.dark) .julow-topbar-search.search-field .search-field__group,
+[data-theme="light"] .julow-topbar-search.search-field .search-field__group {
+  border-color: color-mix(in oklch, var(--julow-muted) 16%, transparent);
+  background: color-mix(in oklch, white 72%, var(--julow-bg));
+  box-shadow: inset 0 1px 0 color-mix(in oklch, white 60%, transparent);
+}
+
+@media (hover: hover) {
+  :root:not(.dark) .julow-topbar-search.search-field .search-field__group:hover:not(:focus-within),
+  :root:not(.dark) .julow-topbar-search.search-field .search-field__group[data-hovered="true"]:not([data-focus-within="true"]),
+  [data-theme="light"] .julow-topbar-search.search-field .search-field__group:hover:not(:focus-within),
+  [data-theme="light"] .julow-topbar-search.search-field .search-field__group[data-hovered="true"]:not([data-focus-within="true"]) {
+    background: color-mix(in oklch, white 82%, var(--julow-bg));
+    border-color: color-mix(in oklch, var(--julow-muted) 24%, transparent);
+  }
+}
+
+:root:not(.dark) .julow-topbar-search.search-field .search-field__group:focus-within,
+:root:not(.dark) .julow-topbar-search.search-field .search-field__group[data-focus-within="true"],
+[data-theme="light"] .julow-topbar-search.search-field .search-field__group:focus-within,
+[data-theme="light"] .julow-topbar-search.search-field .search-field__group[data-focus-within="true"] {
+  background: color-mix(in oklch, white 88%, var(--julow-bg));
+  border-color: color-mix(in oklch, var(--accent) 28%, var(--julow-muted) 18%);
+}
+
+/* ─── Command palette (project-scoped search) ─────────────────────────── */
+
+.julow-command-palette {
+  overflow: hidden;
+  border-radius: 1rem;
+  border: 1px solid color-mix(in oklch, var(--julow-glass-border) 88%, transparent);
+  box-shadow:
+    0 16px 48px color-mix(in oklch, black 18%, transparent),
+    0 0 0 1px color-mix(in oklch, white 6%, transparent) inset;
+}
+
+.julow-command-palette.glass-panel,
+.julow-command-palette--dropdown.glass-panel,
+.julow-command-palette--overlay.glass-panel {
+  background: var(--julow-palette-glass-bg);
+  backdrop-filter: blur(var(--julow-palette-glass-blur));
+  -webkit-backdrop-filter: blur(var(--julow-palette-glass-blur));
+}
+
+.julow-command-palette__list {
+  background: transparent;
+}
+
+.julow-command-palette--dropdown {
+  animation: julow-palette-in 0.14s ease-out;
+}
+
+.julow-command-palette--overlay {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 32rem);
+  max-height: min(85vh, 36rem);
+  animation: julow-palette-in 0.16s ease-out;
+}
+
+@media (max-width: 1023px) {
+  .julow-command-palette--overlay.glass-panel {
+    background: var(--julow-panel-solid);
+    border: 1px solid var(--julow-panel-solid-border);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    box-shadow: 0 16px 48px oklch(0 0 0 / 0.32);
+  }
+
+  .julow-command-palette-backdrop__shade {
+    background: oklch(0 0 0 / 0.45);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+.julow-command-palette-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 1rem 1rem 2rem;
+  padding-top: max(1rem, env(safe-area-inset-top));
+}
+
+.julow-command-palette-backdrop__shade {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: color-mix(in oklch, var(--julow-bg) 52%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+@keyframes julow-palette-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.julow-command-palette__item {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.625rem;
+  border-radius: 0.625rem;
+  padding: 0.5rem 0.625rem;
+  text-align: left;
+  transition:
+    background-color 0.12s ease,
+    color 0.12s ease;
+}
+
+.julow-command-palette__item:hover,
+.julow-command-palette__item.is-active {
+  background: color-mix(in oklch, var(--accent) 10%, var(--julow-glass-bg));
+}
+
+.julow-command-palette__item-icon {
+  display: flex;
+  width: 1.5rem;
+  height: 1.5rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+}
+
+.julow-command-palette__enter-hint,
+.julow-command-palette__kbd {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  border-radius: 0.375rem;
+  border: 1px solid color-mix(in oklch, var(--julow-glass-border) 75%, transparent);
+  background: color-mix(in oklch, var(--julow-glass-bg) 55%, transparent);
+  padding: 0.125rem 0.375rem;
+  font-size: 0.625rem;
+  font-weight: 500;
+  line-height: 1;
+  color: color-mix(in oklch, var(--julow-muted) 92%, transparent);
+}
+
+/* ─── Buttons: tighter icon + label spacing ───────────────────────────── */
+
+.button {
+  gap: 0.375rem;
+}
+
+.button svg:not([data-slot="spinner"] svg, [data-slot="link-icon"] svg) {
+  margin: 0 !important;
+  flex-shrink: 0;
+  width: 1rem !important;
+  height: 1rem !important;
+}
+
+.button--sm svg:not([data-slot="spinner"] svg, [data-slot="link-icon"] svg) {
+  width: 0.875rem !important;
+  height: 0.875rem !important;
+}
+
+.button--lg svg:not([data-slot="spinner"] svg, [data-slot="link-icon"] svg) {
+  width: 1.125rem !important;
+  height: 1.125rem !important;
+}
+
+.glass-panel-subtle {
+  background: color-mix(in oklch, var(--julow-glass-bg) 70%, transparent);
+  border: 1px solid var(--julow-glass-border);
+  backdrop-filter: blur(calc(var(--julow-glass-blur) * 0.75));
+  -webkit-backdrop-filter: blur(calc(var(--julow-glass-blur) * 0.75));
+}
+
+.julow-context-split .julow-context-help-trigger {
+  border-left: 1px solid color-mix(in oklch, var(--julow-glass-border) 85%, transparent);
+  background: color-mix(in oklch, var(--julow-glass-bg) 35%, transparent);
+}
+
+.julow-context-split .julow-context-help-trigger:hover {
+  background: color-mix(in oklch, var(--julow-glass-bg) 72%, transparent);
+  color: var(--julow-fg);
+}
+
+.julow-activity-preview:not(:disabled) {
+  cursor: pointer;
+}
+
+.julow-activity-preview:not(:disabled):hover {
+  background: color-mix(in oklch, var(--julow-glass-bg) 82%, transparent);
+  border-color: color-mix(in oklch, var(--accent) 22%, var(--julow-glass-border));
+}
+
+.workspace-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklch, var(--julow-muted) 40%, transparent)
+    transparent;
+}
+
+/* ─── Form controls (native inputs styled to match glass UI) ──────────── */
+
+.julow-field-label {
+  display: block;
+  margin-bottom: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--julow-muted);
+}
+
+.julow-input {
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid var(--julow-input-border);
+  background: var(--julow-input-bg);
+  padding: 0.5625rem 0.75rem;
+  font-size: 0.875rem;
+  color: var(--julow-fg);
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  appearance: none;
+}
+
+.julow-input::placeholder {
+  color: color-mix(in oklch, var(--julow-muted) 80%, transparent);
+}
+
+.julow-input:hover {
+  border-color: color-mix(in oklch, var(--julow-muted) 28%, var(--julow-input-border));
+}
+
+.julow-input:focus,
+.julow-input:focus-visible {
+  border-color: color-mix(in oklch, var(--accent) 60%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in oklch, var(--accent) 18%, transparent);
+}
+
+.julow-input--with-icon {
+  padding-left: 2.25rem;
+}
+
+select.julow-input {
+  cursor: pointer;
+}
+
+/* ─── Modal ───────────────────────────────────────────────────────────── */
+
+.julow-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: oklch(0.1 0.01 286 / 0.62);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: julow-modal-fade 0.16s ease;
+}
+
+/* Solid, opaque modal — no see-through content behind it. */
+.julow-modal {
+  width: 100%;
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+  border-radius: 1.25rem;
+  background: var(--julow-panel-solid);
+  border: 1px solid var(--julow-panel-solid-border);
+  box-shadow:
+    0 24px 60px oklch(0 0 0 / 0.35),
+    0 2px 8px oklch(0 0 0 / 0.2);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  animation: julow-modal-pop 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes julow-modal-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes julow-modal-pop {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+
+/* Canvas node — translucent glass cards. */
+.julow-canvas-node {
+  position: relative;
+  background: color-mix(in oklch, var(--julow-glass-bg) 72%, transparent);
+  border: 1px solid var(--julow-glass-border);
+  backdrop-filter: blur(calc(var(--julow-glass-blur) * 0.85));
+  -webkit-backdrop-filter: blur(calc(var(--julow-glass-blur) * 0.85));
+  box-shadow:
+    0 12px 28px oklch(0 0 0 / 0.18),
+    0 1px 0 oklch(1 0 0 / 0.05) inset;
+  transition:
+    box-shadow 0.18s ease,
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    background 0.18s ease;
+  animation: julow-node-in 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.julow-canvas-node:hover {
+  background: color-mix(in oklch, var(--julow-glass-bg) 82%, transparent);
+  border-color: color-mix(in oklch, var(--accent) 40%, var(--julow-glass-border));
+  box-shadow:
+    0 18px 40px oklch(0 0 0 / 0.24),
+    0 0 0 1px color-mix(in oklch, var(--accent) 22%, transparent);
+  transform: translateY(-1px);
+}
+
+.react-flow__node.selected .julow-canvas-node {
+  border-color: color-mix(in oklch, var(--accent) 55%, var(--julow-glass-border));
+  box-shadow: 0 0 0 2px color-mix(in oklch, var(--accent) 35%, transparent);
+}
+
+.julow-canvas-node__remove {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 9999px;
+  background: var(--julow-panel-solid);
+  border: 1px solid var(--julow-panel-solid-border);
+  color: var(--julow-muted);
+  opacity: 0;
+  transform: scale(0.8);
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease,
+    color 0.15s ease;
+  box-shadow: 0 4px 10px oklch(0 0 0 / 0.25);
+}
+
+.julow-canvas-node:hover .julow-canvas-node__remove {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.julow-canvas-node__remove:hover {
+  color: var(--danger, oklch(0.62 0.2 25));
+  border-color: color-mix(in oklch, var(--danger, oklch(0.62 0.2 25)) 50%, transparent);
+}
+
+@keyframes julow-node-in {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+}
+
+/* Agent "thinking" dots while a reply is being generated. */
+.julow-thinking {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  padding: 2px 0;
+}
+
+.julow-thinking span {
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: color-mix(in oklch, var(--accent) 70%, transparent);
+  animation: julow-think 1s ease-in-out infinite;
+}
+
+.julow-thinking span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.julow-thinking span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes julow-think {
+  0%,
+  60%,
+  100% {
+    opacity: 0.25;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+
+/* Confirmation (proposal) card entrance. */
+.julow-proposal-card {
+  animation: julow-node-in 0.25s ease;
+}
+
+/* ─── Task detail: editable title, tags, markdown editor ──────────────── */
+
+.julow-task-detail__title-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  padding: 2px 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.35;
+  color: var(--julow-fg);
+  border-radius: 6px;
+}
+
+.julow-task-detail__title-input:focus {
+  box-shadow: 0 2px 0 0 color-mix(in oklch, var(--accent) 50%, transparent);
+}
+
+.julow-task-detail__editor {
+  border: 1px solid var(--julow-input-border);
+  border-radius: 0.75rem;
+  background: var(--julow-input-bg-subtle);
+  padding: 0.5rem 0.75rem;
+  transition: border-color 0.15s ease;
+}
+
+.julow-task-detail__editor:focus-within {
+  border-color: color-mix(in oklch, var(--accent) 50%, transparent);
+}
+
+.julow-prose {
+  min-height: 4.5rem;
+  outline: none;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--julow-fg);
+}
+
+.julow-prose:focus {
+  outline: none;
+}
+
+.julow-prose p {
+  margin: 0 0 0.5rem;
+}
+
+.julow-prose p:last-child {
+  margin-bottom: 0;
+}
+
+.julow-prose h1,
+.julow-prose h2,
+.julow-prose h3 {
+  font-weight: 600;
+  line-height: 1.3;
+  margin: 0.75rem 0 0.4rem;
+}
+
+.julow-prose h1 {
+  font-size: 1.05rem;
+}
+.julow-prose h2 {
+  font-size: 0.98rem;
+}
+.julow-prose h3 {
+  font-size: 0.9rem;
+}
+
+.julow-prose ul,
+.julow-prose ol {
+  margin: 0 0 0.5rem;
+  padding-left: 1.2rem;
+}
+
+.julow-prose ul {
+  list-style: disc;
+}
+.julow-prose ol {
+  list-style: decimal;
+}
+
+.julow-prose li {
+  margin: 0.15rem 0;
+}
+
+.julow-prose a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.julow-prose code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.8em;
+  background: color-mix(in oklch, var(--julow-muted) 18%, transparent);
+  padding: 0.1em 0.35em;
+  border-radius: 5px;
+}
+
+.julow-prose pre {
+  background: color-mix(in oklch, var(--julow-muted) 16%, transparent);
+  padding: 0.6rem 0.75rem;
+  border-radius: 0.6rem;
+  overflow-x: auto;
+  margin: 0 0 0.5rem;
+}
+
+.julow-prose pre code {
+  background: transparent;
+  padding: 0;
+}
+
+.julow-prose blockquote {
+  border-left: 3px solid color-mix(in oklch, var(--accent) 50%, transparent);
+  padding-left: 0.75rem;
+  color: var(--julow-muted);
+  margin: 0 0 0.5rem;
+}
+
+.julow-tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: 9999px;
+  background: color-mix(in oklch, var(--julow-glass-bg) 70%, transparent);
+  border: 1px solid var(--julow-glass-border);
+  padding: 0.125rem 0.25rem 0.125rem 0.55rem;
+  font-size: 0.75rem;
+  color: var(--julow-fg);
+}
+
+.julow-tag-chip__remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 9999px;
+  color: var(--julow-muted);
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.julow-tag-chip__remove:hover {
+  color: var(--julow-fg);
+  background: color-mix(in oklch, var(--julow-muted) 20%, transparent);
+}
+
+.julow-tag-input {
+  min-width: 6rem;
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 0.8rem;
+  color: var(--julow-fg);
+  padding: 0.25rem;
+}
+
+.julow-tag-input::placeholder {
+  color: color-mix(in oklch, var(--julow-muted) 80%, transparent);
+}
+
+/* ─── Chat: @mention autocomplete + voice mic ────────────────────────── */
+
+.julow-mention-pop {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 30;
+  max-height: 220px;
+  overflow-y: auto;
+  border-radius: 0.85rem;
+  background: var(--julow-panel-solid);
+  border: 1px solid var(--julow-panel-solid-border);
+  box-shadow: 0 16px 40px oklch(0 0 0 / 0.3);
+  padding: 0.25rem;
+  animation: julow-modal-pop 0.14s ease;
+}
+
+.julow-mention-item {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  width: 100%;
+  text-align: left;
+  padding: 0.4rem 0.55rem;
+  border-radius: 0.6rem;
+  transition: background 0.12s ease;
+}
+
+.julow-mention-item:hover,
+.julow-mention-item.is-active {
+  background: color-mix(in oklch, var(--accent) 14%, transparent);
+}
+
+.julow-mention-item__handle {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.julow-mention-item__name {
+  font-size: 0.8rem;
+  color: var(--julow-fg);
+}
+
+.julow-mention-item__sub {
+  margin-left: auto;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--julow-muted);
+}
+
+.julow-chat-composer__mic {
+  flex-shrink: 0;
+}
+
+.julow-mic-live {
+  animation: julow-mic-pulse 1s ease-in-out infinite;
+}
+
+/* ─── Canvas flow nodes ──────────────────────────────────────────────── */
+
+.julow-canvas-project {
+  cursor: pointer;
+}
+
+/* Agent chat & markdown links */
+.julow-streamdown a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  font-weight: 500;
+}
+
+.julow-streamdown a:hover {
+  opacity: 0.85;
+}
+
+/* Internal app/task links render as an obvious in-app "open" pill (current
+   tab), visually distinct from external links (which keep the safety modal). */
+.julow-streamdown a[href^="/app/"],
+.julow-streamdown a[href*="?task="],
+.julow-streamdown a[href*="&task="] {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2em;
+  padding: 0.02em 0.5em;
+  border-radius: 0.5rem;
+  background: color-mix(in oklch, var(--accent) 12%, transparent);
+  border: 1px solid color-mix(in oklch, var(--accent) 26%, transparent);
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+  line-height: 1.4;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.julow-streamdown a[href^="/app/"]::after,
+.julow-streamdown a[href*="?task="]::after,
+.julow-streamdown a[href*="&task="]::after {
+  content: "→";
+  font-size: 0.9em;
+  opacity: 0.75;
+}
+
+.julow-streamdown a[href^="/app/"]:hover,
+.julow-streamdown a[href*="?task="]:hover,
+.julow-streamdown a[href*="&task="]:hover {
+  background: color-mix(in oklch, var(--accent) 20%, transparent);
+  border-color: color-mix(in oklch, var(--accent) 42%, transparent);
+  opacity: 1;
+}
+
+/* A resolved proposal card that links to its task becomes clickable. */
+.julow-proposal-card--clickable {
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.julow-proposal-card--clickable:hover {
+  border-color: color-mix(in oklch, var(--accent) 45%, var(--julow-glass-border));
+  background: color-mix(in oklch, var(--accent) 7%, transparent);
+}
+
+.julow-proposal-card--clickable:focus-visible {
+  outline: 2px solid color-mix(in oklch, var(--accent) 60%, transparent);
+  outline-offset: 1px;
+}
+
+.julow-canvas-task:hover {
+  transform: translateY(-1px);
+}
+
+.julow-canvas-stage {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  padding: 0.4rem 0.55rem 0.4rem 0.9rem;
+  background: color-mix(in oklch, var(--julow-glass-bg) 68%, transparent);
+  border: 1px solid var(--julow-glass-border);
+  backdrop-filter: blur(calc(var(--julow-glass-blur) * 0.75));
+  -webkit-backdrop-filter: blur(calc(var(--julow-glass-blur) * 0.75));
+  box-shadow: 0 6px 18px oklch(0 0 0 / 0.14);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--julow-fg);
+}
+
+.julow-canvas-context-mic {
+  position: absolute;
+  right: 0.5rem;
+  bottom: 0.5rem;
+  background: color-mix(in oklch, var(--julow-muted) 18%, var(--julow-glass-bg)) !important;
+  border: 1px solid var(--julow-glass-border);
+}
+
+.julow-canvas-context-mic[data-recording="true"] {
+  background: color-mix(in oklch, var(--accent) 22%, var(--julow-glass-bg)) !important;
+  border-color: color-mix(in oklch, var(--accent) 45%, transparent);
+  color: var(--accent);
+}
+
+.julow-canvas-stage__label {
+  white-space: nowrap;
+}
+
+.julow-canvas-stage__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 0.35rem;
+  border-radius: 9999px;
+  background: color-mix(in oklch, var(--accent) 16%, transparent);
+  color: var(--accent);
+  font-size: 0.7rem;
+}
+
+/* ─── HeroUI Select, app-styled ──────────────────────────────────────── */
+
+.julow-select-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid var(--julow-input-border);
+  background: var(--julow-input-bg);
+  padding: 0.5rem 0.7rem;
+  font-size: 0.875rem;
+  color: var(--julow-fg);
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.julow-select-trigger:hover {
+  border-color: color-mix(in oklch, var(--julow-muted) 28%, var(--julow-input-border));
+}
+
+.julow-select-trigger[data-focused],
+.julow-select-trigger[data-focus-visible],
+.julow-select-trigger:focus-visible {
+  border-color: color-mix(in oklch, var(--accent) 60%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in oklch, var(--accent) 18%, transparent);
+}
+
+.julow-select-popover {
+  z-index: 120;
+  min-width: var(--trigger-width, 12rem);
+  border-radius: 0.85rem;
+  background: var(--julow-panel-solid);
+  border: 1px solid var(--julow-panel-solid-border);
+  box-shadow: 0 16px 40px oklch(0 0 0 / 0.32);
+  padding: 0.25rem;
+}
+
+.julow-select-popover [role="option"] {
+  display: flex;
+  align-items: center;
+  border-radius: 0.55rem;
+  padding: 0.45rem 0.6rem;
+  font-size: 0.85rem;
+  color: var(--julow-fg);
+  cursor: pointer;
+  outline: none;
+}
+
+.julow-select-popover [role="option"][data-focused],
+.julow-select-popover [role="option"]:hover {
+  background: color-mix(in oklch, var(--accent) 14%, transparent);
+}
+
+.julow-select-popover [role="option"][data-selected] {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+@keyframes julow-mic-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* ─── Auth pages: unified gradient + glass form ─────────────────────────── */
+
+.julow-auth-shell {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  min-height: 100dvh;
+  background: var(--julow-bg);
+  overflow: hidden;
+}
+
+.julow-auth-header {
+  min-height: 4.5rem;
+}
+
+.julow-auth-tagline {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  z-index: 10;
+  max-width: min(28rem, 72vw);
+  padding: 1.25rem 1.5rem 1.75rem;
+  text-align: left;
+}
+
+@media (min-width: 768px) {
+  .julow-auth-tagline {
+    padding: 1.5rem 2.5rem 2.5rem;
+  }
+}
+
+.julow-auth-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.julow-auth-shell .julow-field-label {
+  color: color-mix(in oklch, var(--julow-fg) 78%, var(--julow-muted));
+}
+
+.julow-auth-shell .julow-input {
+  background: color-mix(in oklch, var(--julow-glass-bg) 82%, transparent);
+  border: 1px solid color-mix(in oklch, var(--julow-fg) 14%, var(--julow-glass-border));
+  backdrop-filter: blur(calc(var(--julow-glass-blur) * 0.5));
+  -webkit-backdrop-filter: blur(calc(var(--julow-glass-blur) * 0.5));
+  color: var(--julow-fg);
+}
+
+.julow-auth-shell .julow-input::placeholder {
+  color: color-mix(in oklch, var(--julow-muted) 72%, transparent);
+}
+
+.julow-auth-shell .julow-input:hover {
+  border-color: color-mix(in oklch, var(--julow-fg) 22%, var(--julow-glass-border));
+  background: color-mix(in oklch, var(--julow-glass-bg) 90%, transparent);
+}
+
+.dark .julow-auth-shell .julow-input,
+[data-theme="dark"] .julow-auth-shell .julow-input {
+  border-color: color-mix(in oklch, var(--julow-fg) 20%, var(--julow-glass-border));
+  background: color-mix(in oklch, var(--julow-glass-bg) 95%, transparent);
+}
+
+.julow-auth-illustration__mesh {
+  position: absolute;
+  inset: -20%;
+  background:
+    radial-gradient(
+      ellipse 70% 55% at 20% 80%,
+      color-mix(in oklch, var(--julow-gradient-1) 45%, transparent) 0%,
+      transparent 65%
+    ),
+    radial-gradient(
+      ellipse 60% 50% at 75% 25%,
+      color-mix(in oklch, var(--julow-gradient-2) 40%, transparent) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse 55% 45% at 50% 50%,
+      color-mix(in oklch, var(--julow-gradient-3) 35%, transparent) 0%,
+      transparent 55%
+    );
+  animation: julow-auth-mesh-drift 18s ease-in-out infinite alternate;
+  opacity: 0.9;
+}
+
+.julow-auth-illustration__grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(color-mix(in oklch, var(--julow-fg) 4%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in oklch, var(--julow-fg) 4%, transparent) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 80% 70% at 50% 50%, black 20%, transparent 75%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 50%, black 20%, transparent 75%);
+  opacity: 0.35;
+}
+
+.dark .julow-auth-illustration__grid,
+[data-theme="dark"] .julow-auth-illustration__grid {
+  display: none;
+}
+
+.julow-auth-orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(0.5px);
+  pointer-events: none;
+}
+
+.julow-auth-orb--1 {
+  top: 18%;
+  left: 12%;
+  width: 140px;
+  height: 140px;
+  background: radial-gradient(
+    circle at 35% 35%,
+    color-mix(in oklch, var(--julow-gradient-2) 70%, white) 0%,
+    color-mix(in oklch, var(--julow-gradient-2) 20%, transparent) 70%
+  );
+  animation: julow-auth-float-1 12s ease-in-out infinite;
+}
+
+.julow-auth-orb--2 {
+  top: 42%;
+  right: 10%;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(
+    circle at 40% 40%,
+    color-mix(in oklch, var(--julow-gradient-1) 65%, white) 0%,
+    color-mix(in oklch, var(--julow-gradient-1) 15%, transparent) 72%
+  );
+  animation: julow-auth-float-2 16s ease-in-out infinite;
+}
+
+.julow-auth-orb--3 {
+  bottom: 16%;
+  left: 28%;
+  width: 100px;
+  height: 100px;
+  background: radial-gradient(
+    circle at 45% 45%,
+    color-mix(in oklch, var(--accent) 55%, white) 0%,
+    color-mix(in oklch, var(--accent) 12%, transparent) 68%
+  );
+  animation: julow-auth-float-3 10s ease-in-out infinite;
+}
+
+.dark .julow-auth-orb--1,
+[data-theme="dark"] .julow-auth-orb--1 {
+  background: radial-gradient(
+    circle at 35% 35%,
+    oklch(0.72 0.17 45 / 0.55) 0%,
+    oklch(0.55 0.12 45 / 0.1) 72%
+  );
+  filter: blur(1px);
+}
+
+.dark .julow-auth-orb--2,
+[data-theme="dark"] .julow-auth-orb--2 {
+  background: radial-gradient(
+    circle at 40% 40%,
+    oklch(0.66 0.18 285 / 0.5) 0%,
+    oklch(0.48 0.14 285 / 0.08) 74%
+  );
+  filter: blur(1px);
+}
+
+.dark .julow-auth-orb--3,
+[data-theme="dark"] .julow-auth-orb--3 {
+  background: radial-gradient(
+    circle at 45% 45%,
+    oklch(0.68 0.15 210 / 0.45) 0%,
+    oklch(0.52 0.11 210 / 0.06) 70%
+  );
+  filter: blur(1px);
+}
+
+.julow-auth-enter {
+  animation: julow-auth-fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.julow-auth-enter--delay {
+  animation-delay: 0.12s;
+}
+
+.julow-auth-enter--delay-2 {
+  animation-delay: 0.24s;
+}
+
+.julow-auth-form-enter {
+  animation: julow-auth-fade-up 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.julow-landing-enter {
+  animation: julow-auth-fade-up 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.julow-landing-enter--delay {
+  animation-delay: 0.08s;
+}
+
+.julow-landing-enter--delay-2 {
+  animation-delay: 0.16s;
+}
+
+.julow-landing-enter--delay-3 {
+  animation-delay: 0.24s;
+}
+
+.julow-field-error {
+  margin-top: 0.375rem;
+  font-size: 0.75rem;
+  color: var(--danger, oklch(0.62 0.2 25));
+}
+
+.julow-input--error {
+  border-color: color-mix(in oklch, var(--danger, oklch(0.62 0.2 25)) 55%, transparent);
+}
+
+.julow-input--error:focus,
+.julow-input--error:focus-visible {
+  border-color: color-mix(in oklch, var(--danger, oklch(0.62 0.2 25)) 70%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in oklch, var(--danger, oklch(0.62 0.2 25)) 18%, transparent);
+}
+
+@keyframes julow-auth-mesh-drift {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    transform: translate(3%, -2%) scale(1.06);
+  }
+}
+
+@keyframes julow-auth-float-1 {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(12px, -18px);
+  }
+}
+
+@keyframes julow-auth-float-2 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(-16px, 14px) scale(1.05);
+  }
+}
+
+@keyframes julow-auth-float-3 {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(8px, -10px);
+  }
+}
+
+@keyframes julow-auth-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 1023px) {
+  .julow-auth-orb--2 {
+    width: 120px;
+    height: 120px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .julow-auth-illustration__mesh,
+  .julow-auth-orb,
+  .julow-auth-enter,
+  .julow-auth-form-enter,
+  .julow-landing-enter {
+    animation: none;
+  }
+}
+
+/* ─── Stacked modal (knowledge on top of brief) ───────────────────────── */
+
+.julow-modal-overlay--elevated {
+  z-index: 130;
+}
+
+/* ─── Vaul bottom sheets (mobile) ───────────────────────────────────── */
+
+.julow-sheet-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: oklch(0 0 0 / 0.45);
+}
+
+.julow-sheet-overlay--elevated {
+  z-index: 130;
+}
+
+/* Floating solid bottom sheets — disable vaul's ::after ghost bar */
+.julow-sheet[data-vaul-drawer-direction="bottom"]::after {
+  display: none !important;
+}
+
+@media (max-width: 1023px) {
+  /* Small dialog sheets: floating card, height grows to content up to a cap. */
+  .julow-sheet[data-vaul-drawer] {
+    position: fixed !important;
+    top: auto !important;
+    bottom: calc(var(--sheet-float-gap) + var(--safe-bottom)) !important;
+    left: var(--sheet-side-gap) !important;
+    right: var(--sheet-side-gap) !important;
+    width: calc(100vw - 2 * var(--sheet-side-gap)) !important;
+    max-width: calc(100vw - 2 * var(--sheet-side-gap)) !important;
+    box-sizing: border-box !important;
+    max-height: calc(
+      100dvh - var(--topbar-height) - var(--sheet-float-gap) * 2 - var(--safe-bottom)
+    ) !important;
+    border-radius: 1.25rem !important;
+    overflow: hidden !important;
+    border: 1px solid var(--julow-panel-solid-border);
+    background: var(--julow-panel-solid);
+    box-shadow: 0 16px 48px oklch(0 0 0 / 0.32);
+  }
+
+  /* Task + agent: full-height slide-up panels that sit under the topbar. */
+  .julow-sheet--task[data-vaul-drawer],
+  .julow-sheet--agent[data-vaul-drawer] {
+    top: auto !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: calc(100dvh - var(--topbar-height)) !important;
+    max-height: calc(100dvh - var(--topbar-height)) !important;
+    min-height: 0 !important;
+    border-radius: 1.25rem 1.25rem 0 0 !important;
+    border-bottom: 0;
+  }
+
+  .julow-sheet__inner {
+    display: flex;
+    min-width: 0;
+    min-height: 0;
+    flex: 1 1 auto;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .julow-sheet--task .julow-sheet__inner,
+  .julow-sheet--agent .julow-sheet__inner {
+    padding-bottom: var(--safe-bottom);
+  }
+
+  /* Agent tabs (Chat/Queue/Activity) are superfluous on mobile — chat only. */
+  .julow-sheet .julow-agent-tabs .tabs__list-container {
+    display: none;
+  }
+}
+
+.julow-sheet {
+  position: fixed;
+  z-index: 101;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  outline: none;
+  overflow: hidden;
+  background: var(--julow-panel-solid);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.julow-sheet-handle {
+  width: 2.5rem;
+  height: 0.25rem;
+  margin: 0.625rem auto 0;
+  flex-shrink: 0;
+  border-radius: 9999px;
+  background: color-mix(in oklch, var(--julow-muted) 45%, transparent);
+}
+
+.julow-sheet-body {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.julow-sheet-footer {
+  padding-bottom: 0.75rem;
+}
+
+.julow-sheet .julow-task-detail-panel,
+.julow-sheet .julow-agent-panel-full,
+.julow-sheet .glass-panel.julow-task-detail-panel,
+.julow-sheet .glass-panel.julow-agent-panel-full,
+.julow-sheet .julow-agent-panel-full--embedded {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  height: 100%;
+  max-height: none;
+  border: none;
+  border-radius: 0;
+  background: var(--julow-panel-solid);
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  overflow-x: hidden;
+}
+
+@media (max-width: 1023px) {
+  .julow-canvas-board .react-flow__panel.bottom {
+    bottom: calc(
+      var(--bottom-nav-height) + var(--bottom-nav-float-gap) + var(--safe-bottom) +
+        0.75rem
+    ) !important;
+  }
+
+  .julow-canvas-board .react-flow__panel.bottom-right,
+  .julow-canvas-board .react-flow__panel.bottom-left {
+    bottom: calc(
+      var(--bottom-nav-height) + var(--bottom-nav-float-gap) + var(--safe-bottom) +
+        0.75rem
+    ) !important;
+  }
+
+  /* Capture touch gestures so two-finger pinch zooms the canvas (not the page). */
+  .julow-flow,
+  .julow-flow .react-flow__pane,
+  .julow-flow .react-flow__renderer,
+  .julow-flow .react-flow__viewport {
+    touch-action: none;
+  }
+
+  /* Toolbar buttons wrap instead of overlapping on narrow viewports. */
+  .julow-canvas-board .julow-zoom-toolbar {
+    flex-wrap: wrap !important;
+    align-items: flex-start !important;
+    max-width: calc(100% - 1.5rem) !important;
+    gap: 0.375rem !important;
+  }
+
+  .julow-canvas-board .julow-zoom-toolbar > div {
+    flex-wrap: wrap;
+    max-width: 100%;
+  }
+}
+
+/* ─── Color-coded select (status / priority) ──────────────────────────── */
+
+.julow-color-select__value {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.julow-color-dot {
+  width: 9px;
+  height: 9px;
+  flex-shrink: 0;
+  border-radius: 9999px;
+  background: color-mix(in oklch, var(--julow-muted) 65%, transparent);
+}
+
+.julow-color-dot--accent {
+  background: var(--accent);
+}
+.julow-color-dot--warning {
+  background: var(--warning, oklch(0.78 0.15 75));
+}
+.julow-color-dot--success {
+  background: var(--success, oklch(0.7 0.15 155));
+}
+.julow-color-dot--danger {
+  background: var(--danger, oklch(0.62 0.2 25));
+}
+
+.julow-color-select__trigger[data-tone="accent"] {
+  border-color: color-mix(in oklch, var(--accent) 40%, var(--julow-glass-border));
+}
+.julow-color-select__trigger[data-tone="warning"] {
+  border-color: color-mix(
+    in oklch,
+    var(--warning, oklch(0.78 0.15 75)) 42%,
+    var(--julow-glass-border)
+  );
+}
+.julow-color-select__trigger[data-tone="success"] {
+  border-color: color-mix(
+    in oklch,
+    var(--success, oklch(0.7 0.15 155)) 42%,
+    var(--julow-glass-border)
+  );
+}
+.julow-color-select__trigger[data-tone="danger"] {
+  border-color: color-mix(
+    in oklch,
+    var(--danger, oklch(0.62 0.2 25)) 45%,
+    var(--julow-glass-border)
+  );
+}
+
+.julow-color-select__item {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+/* ─── Tag field (chips + inline input) ────────────────────────────────── */
+
+.julow-tag-field {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.5rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--julow-input-border);
+  background: var(--julow-input-bg-subtle);
+  padding: 0.4rem 0.55rem;
+  transition: border-color 0.15s ease;
+}
+
+.julow-tag-field:focus-within {
+  border-color: color-mix(in oklch, var(--accent) 50%, transparent);
+}
+
+/* ─── HeroUI DatePicker, app-styled ───────────────────────────────────── */
+
+.julow-datepicker {
+  width: 100%;
+}
+
+.julow-datepicker__group {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--julow-input-border);
+  background: var(--julow-input-bg);
+  padding: 0.3rem 0.4rem 0.3rem 0.7rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.julow-datepicker__group:focus-within {
+  border-color: color-mix(in oklch, var(--accent) 60%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in oklch, var(--accent) 18%, transparent);
+}
+
+.julow-datepicker__segments {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  padding: 0.2rem 0;
+  font-size: 0.875rem;
+  color: var(--julow-fg);
+  outline: none;
+}
+
+.julow-datepicker__segment {
+  border-radius: 4px;
+  padding: 0 2px;
+  font-variant-numeric: tabular-nums;
+  outline: none;
+}
+
+.julow-datepicker__segment[data-type="literal"] {
+  padding: 0;
+  color: var(--julow-muted);
+}
+
+.julow-datepicker__segment[data-placeholder] {
+  color: color-mix(in oklch, var(--julow-muted) 80%, transparent);
+}
+
+.julow-datepicker__segment[data-focused] {
+  background: color-mix(in oklch, var(--accent) 24%, transparent);
+  color: var(--julow-fg);
+}
+
+.julow-datepicker__clear,
+.julow-datepicker__trigger {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.55rem;
+  color: var(--julow-muted);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.julow-datepicker__clear {
+  width: 22px;
+  height: 22px;
+}
+.julow-datepicker__trigger {
+  width: 28px;
+  height: 28px;
+}
+
+.julow-datepicker__clear:hover,
+.julow-datepicker__trigger:hover {
+  background: color-mix(in oklch, var(--julow-muted) 16%, transparent);
+  color: var(--julow-fg);
+}
+
+.julow-datepicker__popover {
+  z-index: 200;
+  border-radius: 1rem;
+  background: var(--julow-panel-solid);
+  border: 1px solid var(--julow-panel-solid-border);
+  box-shadow: 0 20px 48px oklch(0 0 0 / 0.34);
+  padding: 0.75rem;
+}
+
+.julow-calendar {
+  width: 16rem;
+}
+
+.julow-calendar__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.julow-calendar__nav {
+  display: flex;
+  width: 28px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  color: var(--julow-muted);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.julow-calendar__nav:hover {
+  background: color-mix(in oklch, var(--julow-muted) 16%, transparent);
+  color: var(--julow-fg);
+}
+
+.julow-calendar__heading {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--julow-fg);
+}
+
+.julow-calendar__grid {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.julow-calendar__weekday {
+  padding-bottom: 0.3rem;
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--julow-muted);
+  text-align: center;
+}
+
+.julow-calendar__cell {
+  display: flex;
+  width: 2rem;
+  height: 2rem;
+  align-items: center;
+  justify-content: center;
+  margin: 1px auto;
+  border-radius: 0.55rem;
+  font-size: 0.8rem;
+  color: var(--julow-fg);
+  cursor: pointer;
+  outline: none;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.julow-calendar__cell[data-outside-month] {
+  color: color-mix(in oklch, var(--julow-muted) 55%, transparent);
+}
+
+.julow-calendar__cell[data-hovered] {
+  background: color-mix(in oklch, var(--accent) 14%, transparent);
+}
+
+.julow-calendar__cell[data-selected] {
+  background: var(--accent);
+  color: var(--accent-foreground);
+  font-weight: 600;
+}
+
+.julow-calendar__cell[data-disabled] {
+  color: color-mix(in oklch, var(--julow-muted) 40%, transparent);
+  cursor: default;
+}
+
+.julow-calendar__cell[data-focus-visible] {
+  box-shadow: 0 0 0 2px color-mix(in oklch, var(--accent) 45%, transparent);
+}
+
+/* ─── Assignee picker (members + agents) ──────────────────────────────── */
+
+.julow-assignee-picker__chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.julow-assignee-chip {
+  display: inline-flex;
+  max-width: 14rem;
+  align-items: center;
+  gap: 0.4rem;
+  border-radius: 9999px;
+  border: 1px solid var(--julow-glass-border);
+  background: color-mix(in oklch, var(--julow-glass-bg) 70%, transparent);
+  padding: 0.15rem 0.5rem 0.15rem 0.25rem;
+  font-size: 0.8rem;
+  color: var(--julow-fg);
+}
+
+.julow-assignee-chip__remove {
+  display: inline-flex;
+  width: 16px;
+  height: 16px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  color: var(--julow-muted);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.julow-assignee-chip__remove:hover {
+  background: color-mix(in oklch, var(--julow-muted) 20%, transparent);
+  color: var(--julow-fg);
+}
+
+.julow-assignee-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 9999px;
+  border: 1px dashed var(--julow-input-border);
+  padding: 0.3rem 0.65rem;
+  font-size: 0.8rem;
+  color: var(--julow-muted);
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.julow-assignee-add:hover {
+  border-color: color-mix(in oklch, var(--accent) 40%, transparent);
+  color: var(--julow-fg);
+}
+
+.julow-assignee-pop-content {
+  z-index: 200;
+}
+
+.julow-assignee-pop {
+  max-height: 18rem;
+  overflow-y: auto;
+  padding: 0.4rem;
+}
+
+.julow-assignee-pop__label {
+  padding: 0.45rem 0.5rem 0.25rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--julow-muted);
+}
+
+.julow-assignee-pop__empty {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8rem;
+  color: var(--julow-muted);
+}
+
+.julow-assignee-row {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 0.6rem;
+  padding: 0.4rem 0.5rem;
+  text-align: left;
+  transition: background 0.15s ease;
+}
+
+.julow-assignee-row:hover {
+  background: color-mix(in oklch, var(--accent) 12%, transparent);
+}
+
+.julow-assignee-row.is-selected {
+  background: color-mix(in oklch, var(--accent) 10%, transparent);
+}
+
+/* ─── Per-task agent conversation (task detail panel, bottom) ───────────── */
+
+.julow-task-chat {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+  background: color-mix(in oklch, var(--julow-glass-bg) 30%, transparent);
+}
+
+.julow-task-chat__filters {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-bottom: 1px solid color-mix(in oklch, var(--julow-glass-border) 70%, transparent);
+  padding: 0.45rem 0.6rem;
+}
+
+.julow-task-chat__filters-label {
+  flex-shrink: 0;
+  font-size: 0.62rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--julow-muted);
+}
+
+.julow-task-chat__chips {
+  display: flex;
+  gap: 0.35rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.julow-task-chat__chips::-webkit-scrollbar {
+  display: none;
+}
+
+.julow-task-chat__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-shrink: 0;
+  max-width: 10rem;
+  border-radius: 999px;
+  border: 1px solid var(--julow-glass-border);
+  background: color-mix(in oklch, var(--julow-glass-bg) 55%, transparent);
+  padding: 0.18rem 0.6rem;
+  font-size: 0.72rem;
+  color: var(--julow-muted);
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.julow-task-chat__chip:hover {
+  color: var(--julow-fg);
+}
+
+.julow-task-chat__chip.is-active {
+  border-color: color-mix(in oklch, var(--accent) 40%, transparent);
+  background: color-mix(in oklch, var(--accent) 12%, var(--julow-glass-bg));
+  color: var(--accent);
+}
+
+.julow-task-chat__scroll {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+  gap: 0.6rem;
+  overflow-y: auto;
+  /* Comfortable bottom padding so the last message never sits under the composer. */
+  padding: 0.7rem 0.6rem 1.1rem;
+}
+
+.julow-task-chat__empty {
+  padding: 0.5rem;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--julow-muted);
+}
+
+.julow-task-chat__msg {
+  display: flex;
+}
+
+.julow-task-chat__msg--user {
+  justify-content: flex-end;
+}
+
+.julow-task-chat__row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.julow-task-chat__author {
+  margin: 0 0 0.2rem 0.1rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--julow-muted);
+}
+
+.julow-task-chat__bubble {
+  max-width: 100%;
+  border-radius: 0.85rem;
+  border: 1px solid var(--julow-glass-border);
+  background: color-mix(in oklch, var(--julow-glass-bg) 88%, var(--julow-bg));
+  padding: 0.5rem 0.7rem;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.julow-task-chat__bubble--user {
+  max-width: 92%;
+  border: none;
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+
+/* Make links inside agent comments/answers clearly read as blue links. */
+.julow-task-chat__bubble .julow-streamdown a {
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Live "agent is working" row at the bottom of the task conversation. */
+.julow-task-chat__working {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.76rem;
+  color: var(--julow-muted);
+}
+
+.julow-task-chat__composer-wrap {
+  position: relative;
+  flex-shrink: 0;
+  border-top: 1px solid color-mix(in oklch, var(--julow-glass-border) 70%, transparent);
+  background: color-mix(in oklch, var(--julow-glass-bg) 55%, transparent);
+  padding: 0.5rem;
+}
+
+.julow-mention-pop--task {
+  left: 0.5rem;
+  right: 0.5rem;
+}
+
+.julow-task-chat__composer {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.4rem;
+}
+
+.julow-task-chat__input {
+  flex: 1;
+  min-height: 2.2rem;
+  max-height: 6rem;
+  border-radius: 0.7rem;
+  border: 1px solid var(--julow-glass-border);
+  background: color-mix(in oklch, var(--julow-glass-bg) 75%, var(--julow-bg));
+  padding: 0.45rem 0.6rem;
+  font-size: 0.82rem;
+  color: var(--julow-fg);
+  outline: none;
+}
+
+.julow-task-chat__input:focus {
+  border-color: color-mix(in oklch, var(--accent) 55%, transparent);
+}

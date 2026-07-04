@@ -1,0 +1,16 @@
+# ─── Background services (worker / ws / bot / migrations) ─────────────────────
+# One image runs any service via tsx; docker-compose overrides the command.
+FROM node:22-alpine
+WORKDIR /app
+RUN apk add --no-cache libc6-compat
+
+COPY package.json package-lock.json* ./
+RUN npm ci
+
+COPY . .
+ENV DATABASE_URL=postgresql://build:build@localhost:5432/build
+RUN npx prisma generate
+
+ENV NODE_ENV=production
+# Default command; overridden per-service in docker-compose.yml
+CMD ["npx", "tsx", "services/worker/index.ts"]

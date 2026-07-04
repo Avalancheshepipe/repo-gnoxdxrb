@@ -1,0 +1,14 @@
+node_modules
+.next
+.git
+.gitignore
+mobile
+**/*.md
+.env
+.env.*
+!.env.example
+src/generated
+npm-debug.log*
+.DS_Store
+Dockerfile*
+docker-compose.yml

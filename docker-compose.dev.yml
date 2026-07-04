@@ -1,0 +1,52 @@
+# Local development infra ONLY (no web/worker/ws/bot).
+# Run the app and Node services locally with npm so you can edit everything:
+#   docker compose -f docker-compose.dev.yml up -d
+#   npm run dev      # web
+#   npm run worker   # agents + automations
+#   npm run ws       # realtime canvas
+#   npm run bot      # telegram (optional)
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-julow}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-julow}
+      POSTGRES_DB: ${POSTGRES_DB:-julow}
+    volumes:
+      - pgdata_dev:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-julow}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redisdata_dev:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Lightweight DB browser at http://localhost:8080 (system: PostgreSQL,
+  # server: postgres, user/password/db: julow). Optional.
+  adminer:
+    image: adminer:latest
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+
+volumes:
+  pgdata_dev:
+  redisdata_dev:

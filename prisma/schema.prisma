@@ -1,0 +1,609 @@
+// Julow data model — Prisma 7 (prisma-client generator, driver adapter required).
+// Connection URLs live in prisma.config.ts, not here.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Auth (better-auth core). Table names are mapped to better-auth defaults.
+// An Organization IS a Julow workspace; Member is the membership with a role.
+// ─────────────────────────────────────────────────────────────────────────────
+
+model User {
+  id            String   @id @default(cuid())
+  name          String
+  email         String   @unique
+  emailVerified Boolean  @default(false)
+  image         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Telegram linkage (optional login / relay identity)
+  telegramId    String?  @unique
+
+  sessions     Session[]
+  accounts     Account[]
+  members      Member[]
+  invitations  Invitation[]
+  assignedTasks TaskAssignee[]
+  comments     Comment[]
+  activities   ActivityLog[]
+  triggeredRuns AgentRun[]   @relation("RunTrigger")
+  chatThreads  ChatThread[]
+  authoredBriefs TaskAgentBrief[] @relation("BriefAuthor")
+
+  @@map("user")
+}
+
+model Session {
+  id                   String   @id @default(cuid())
+  expiresAt            DateTime
+  token                String   @unique
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  ipAddress            String?
+  userAgent            String?
+  userId               String
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activeOrganizationId String?
+
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+// Organization == Workspace
+model Organization {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String?  @unique
+  logo        String?
+  metadata    String?
+  createdAt   DateTime @default(now())
+
+  members     Member[]
+  invitations Invitation[]
+  projects    Project[]
+  agents      Agent[]
+  automations Automation[]
+  integrations Integration[]
+  activities  ActivityLog[]
+  chatThreads ChatThread[]
+  emailLogs   EmailLog[]
+
+  @@map("organization")
+}
+
+model Member {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role           String       @default("member")
+  createdAt      DateTime     @default(now())
+
+  @@unique([organizationId, userId])
+  @@index([userId])
+  @@map("member")
+}
+
+model Invitation {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  email          String
+  role           String?
+  status         String       @default("pending")
+  expiresAt      DateTime
+  inviterId      String
+  inviter        User         @relation(fields: [inviterId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([email])
+  @@map("invitation")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Domain: projects, tasks, attachments, comments
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  REVIEW
+  DONE
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+model Project {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  slug           String
+  description    String?      @db.Text
+  archived       Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  tasks       Task[]
+  canvas      CanvasDoc?
+  canvasNodes CanvasNode[]
+  canvasEdges CanvasEdge[]
+  agentSubscriptions ProjectAgent[]
+
+  @@unique([organizationId, slug])
+  @@index([organizationId])
+  @@map("project")
+}
+
+// An agent SUBSCRIBED to a project: it owns its zone of responsibility there and
+// can auto-handle matching tasks. Optional per-project instructions refine how.
+model ProjectAgent {
+  id           String   @id @default(cuid())
+  projectId    String
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  agentId      String
+  agent        Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  instructions String?  @db.Text
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([projectId, agentId])
+  @@index([projectId])
+  @@index([agentId])
+  @@map("project_agent")
+}
+
+model Task {
+  id          String       @id @default(cuid())
+  projectId   String
+  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title       String
+  description String?      @db.Text
+  status      TaskStatus   @default(TODO)
+  priority    TaskPriority @default(MEDIUM)
+  startDate   DateTime?
+  dueDate     DateTime?
+  tags        String[]
+  position    Int          @default(0)
+  // Latest agent review verdict: { verdict, summary, checklist?, by, at }
+  review      Json?
+  // Per-task brief/context for an assigned agent (what to do, which tools,
+  // extra knowledge): { instructions?, tool?, options?, knowledge?, updatedAt }
+  agentBrief  Json?
+  // When set, the task is archived: hidden from the inbox + canvas, kept in DB
+  // and visible via the Inbox "Archive" filter. null = active.
+  archivedAt  DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  assignees   TaskAssignee[]
+  agentBriefs TaskAgentBrief[]
+  attachments Attachment[]
+  comments    Comment[]
+  agentRuns   AgentRun[]
+  chatThreads ChatThread[]
+  canvasNode  CanvasNode?
+
+  @@index([projectId, status])
+  @@index([projectId, dueDate])
+  @@index([projectId, archivedAt])
+  @@map("task")
+}
+
+// Per-(task, agent) brief: task-specific context/instructions the user writes
+// for ONE assigned agent — what to do, which real capability to use, extra
+// knowledge. Drives the agent's autonomous run on that task. One per pair.
+model TaskAgentBrief {
+  id           String   @id @default(cuid())
+  taskId       String
+  task         Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  agentId      String
+  agent        Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  instructions String?  @db.Text
+  // Which real capability to lean on: general | research | document | report | review
+  tool         String?
+  // { options?: { webSearch, researchQuery, format, documentSpec }, knowledge? }
+  config       Json?
+  createdById  String?
+  createdBy    User?    @relation("BriefAuthor", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([taskId, agentId])
+  @@index([taskId])
+  @@index([agentId])
+  @@map("task_agent_brief")
+}
+
+model TaskAssignee {
+  id      String  @id @default(cuid())
+  taskId  String
+  task    Task    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  userId  String?
+  user    User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  agentId String?
+  agent   Agent?  @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, userId])
+  @@unique([taskId, agentId])
+  @@index([taskId])
+  @@map("task_assignee")
+}
+
+model Attachment {
+  id        String   @id @default(cuid())
+  taskId    String?
+  task      Task?    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  key       String // S3 object key
+  name      String
+  size      Int
+  mime      String
+  createdAt DateTime @default(now())
+
+  @@index([taskId])
+  @@map("attachment")
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  agentId   String?
+  agent     Agent?   @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  body      String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([taskId])
+  @@map("comment")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Agents and runs
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum AgentStatus {
+  ONLINE
+  BUSY
+  IDLE
+  OFFLINE
+}
+
+enum RunStatus {
+  QUEUED
+  RUNNING
+  WAITING_APPROVAL
+  DONE
+  FAILED
+  CANCELLED
+}
+
+model Agent {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  role           String
+  responsibility String?      @db.Text
+  systemPrompt   String       @db.Text
+  model          String // OpenRouter model id, e.g. "openai/gpt-4o-mini"
+  fallbackModel  String?
+  tools          Json         @default("[]") // enabled tool names
+  status         AgentStatus  @default(IDLE)
+  reportsToId    String?
+  reportsTo      Agent?       @relation("AgentHierarchy", fields: [reportsToId], references: [id], onDelete: SetNull)
+  reports        Agent[]      @relation("AgentHierarchy")
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  runs          AgentRun[]
+  assignments   TaskAssignee[]
+  taskBriefs    TaskAgentBrief[]
+  comments      Comment[]
+  canvasNodes   CanvasNode[]
+  chatThreads   ChatThread[]
+  projectSubscriptions ProjectAgent[]
+
+  @@index([organizationId])
+  @@map("agent")
+}
+
+model AgentRun {
+  id            String      @id @default(cuid())
+  agentId       String
+  agent         Agent       @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  taskId        String?
+  task          Task?       @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  triggeredById String?
+  triggeredBy   User?       @relation("RunTrigger", fields: [triggeredById], references: [id], onDelete: SetNull)
+  parentRunId   String?
+  parentRun     AgentRun?   @relation("RunDelegation", fields: [parentRunId], references: [id], onDelete: SetNull)
+  childRuns     AgentRun[]  @relation("RunDelegation")
+  status        RunStatus   @default(QUEUED)
+  input         Json
+  result        String?     @db.Text
+  error         String?     @db.Text
+  tokensIn      Int         @default(0)
+  tokensOut     Int         @default(0)
+  costUsd       Decimal     @default(0) @db.Decimal(12, 6)
+  startedAt     DateTime?
+  finishedAt    DateTime?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  steps AgentStep[]
+
+  @@index([agentId, status])
+  @@index([taskId])
+  @@map("agent_run")
+}
+
+model AgentStep {
+  id        String   @id @default(cuid())
+  runId     String
+  run       AgentRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  index     Int
+  type      String // "text" | "tool-call" | "tool-result" | "reasoning"
+  name      String? // tool name when applicable
+  content   Json
+  createdAt DateTime @default(now())
+
+  @@unique([runId, index])
+  @@index([runId])
+  @@map("agent_step")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Canvas (structured source-of-truth + Yjs realtime snapshot)
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum CanvasNodeType {
+  TASK
+  NOTE
+  AGENT
+  MILESTONE
+}
+
+enum CanvasEdgeKind {
+  RELATES
+  BLOCKS
+  PRODUCES
+  ASSIGNED
+}
+
+model CanvasDoc {
+  id          String   @id @default(cuid())
+  projectId   String   @unique
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  state       Bytes? // Yjs document snapshot
+  boardLayout Json? // { nodeId: { x, y } } drag positions for flow + note nodes
+  // AI-generated project flow graph (откуда → куда):
+  // { nodes: [{ id, title, subtitle?, kind? }], edges: [{ source, target }], generatedAt }
+  flowGraph   Json?
+  version     Int      @default(0)
+  updatedAt   DateTime @updatedAt
+
+  @@map("canvas_doc")
+}
+
+model CanvasNode {
+  id        String         @id @default(cuid())
+  projectId String
+  project   Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  type      CanvasNodeType
+  title     String
+  subtitle  String?
+  status    String?
+  x         Float          @default(0)
+  y         Float          @default(0)
+  width     Float          @default(200)
+  taskId    String?        @unique
+  task      Task?          @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  agentId   String?
+  agent     Agent?         @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  outgoingEdges CanvasEdge[] @relation("EdgeSource")
+  incomingEdges CanvasEdge[] @relation("EdgeTarget")
+
+  @@index([projectId])
+  @@map("canvas_node")
+}
+
+model CanvasEdge {
+  id        String         @id @default(cuid())
+  projectId String
+  project   Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  sourceId  String
+  source    CanvasNode     @relation("EdgeSource", fields: [sourceId], references: [id], onDelete: Cascade)
+  targetId  String
+  target    CanvasNode     @relation("EdgeTarget", fields: [targetId], references: [id], onDelete: Cascade)
+  kind      CanvasEdgeKind @default(RELATES)
+  createdAt DateTime       @default(now())
+
+  @@unique([sourceId, targetId, kind])
+  @@index([projectId])
+  @@map("canvas_edge")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Automations, integrations, activity
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Automation {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  description    String?      @db.Text
+  trigger        Json // { type, config }
+  action         Json // { type, config }
+  enabled        Boolean      @default(true)
+  aiManaged      Boolean      @default(false)
+  runsToday      Int          @default(0)
+  lastRunAt      DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([organizationId])
+  @@map("automation")
+}
+
+enum IntegrationType {
+  TELEGRAM
+  DISCORD
+  SLACK
+}
+
+model Integration {
+  id             String          @id @default(cuid())
+  organizationId String
+  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  type           IntegrationType
+  name           String
+  handle         String?
+  config         Json // chat ids, tokens (encrypted at app layer)
+  connected      Boolean         @default(false)
+  lastMessage    String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@index([organizationId])
+  @@map("integration")
+}
+
+enum ActivityType {
+  AGENT
+  TASK
+  AUTOMATION
+  SYSTEM
+}
+
+model ActivityLog {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String?
+  user           User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  type           ActivityType
+  actor          String
+  action         String
+  target         String?
+  metadata       Json?
+  createdAt      DateTime     @default(now())
+
+  @@index([organizationId, createdAt])
+  @@map("activity_log")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Agent chat (persistent per-user conversation memory)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model ChatThread {
+  id             String        @id @default(cuid())
+  organizationId String
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  agentId        String?
+  agent          Agent?        @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  // When set, this thread is scoped to a single task (clarifying questions /
+  // per-task conversation with the responsible agent).
+  taskId         String?
+  task           Task?         @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  title          String        @default("New chat")
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  messages       ChatMessage[]
+
+  @@index([organizationId, userId])
+  @@index([taskId])
+  @@map("chat_thread")
+}
+
+model ChatMessage {
+  id        String     @id @default(cuid())
+  threadId  String
+  thread    ChatThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  role      String // "user" | "assistant"
+  content   String     @db.Text
+  // Structured proposals (write-actions awaiting confirmation), if any.
+  proposals Json?
+  createdAt DateTime   @default(now())
+
+  @@index([threadId])
+  @@map("chat_message")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Outbound email audit log (async sends via BullMQ)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model EmailLog {
+  id             String        @id @default(cuid())
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  to             String
+  subject        String
+  template       String
+  status         String        @default("queued")
+  error          String?       @db.Text
+  metadata       Json?
+  createdAt      DateTime      @default(now())
+  sentAt         DateTime?
+
+  @@index([organizationId, createdAt])
+  @@index([to])
+  @@map("email_log")
+}

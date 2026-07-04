@@ -1,0 +1,13 @@
+# Automatic HTTPS via Let's Encrypt. Set APP_DOMAIN and WS_DOMAIN in .env.
+# The bot webhook is served by the app at /api/telegram/webhook/<secret>.
+
+{$APP_DOMAIN} {
+	encode zstd gzip
+	reverse_proxy app:3000
+}
+
+# Realtime collaboration (Hocuspocus / Yjs). Caddy upgrades WebSocket
+# connections automatically.
+{$WS_DOMAIN} {
+	reverse_proxy ws:1234
+}

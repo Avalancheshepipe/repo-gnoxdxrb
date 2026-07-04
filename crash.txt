@@ -1,0 +1,7 @@
+﻿adb.exe : cat: /data/system/dropbox/data_app_crash@1782676955594.txt: Permission denied
+C:\Users\vaces8v\AppData\Local\Temp\ps-script-a26da4df-d34c-40bf-b084-0f400d0a9e61.ps1:87 знак:90
++ ... 4131001YQ"; & $adb -s $dev shell "cat /data/system/dropbox/data_app_c ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (cat: /data/syst...rmission denied:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
