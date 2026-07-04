@@ -2,6 +2,7 @@
 
 import {
   AiBrain01Icon,
+  CheckmarkBadge01Icon,
   Logout01Icon,
   Share01Icon,
   UserGroupIcon,
@@ -21,10 +22,12 @@ import {
   CommandPaletteRoot,
 } from "@/components/workspace/command-palette";
 import { WorkspaceProjectPicker } from "@/components/workspace/mobile/workspace-project-picker";
+import { ApprovalsDialog } from "@/components/workspace/approvals-dialog";
 import { ShareDialog } from "@/components/workspace/share-dialog";
 import { useTaskWorkspace } from "@/components/workspace/task-workspace-context";
 import { authClient } from "@/lib/auth-client";
 import { LOCALE_LABEL, LOCALES } from "@/lib/i18n";
+import { api } from "@/lib/trpc";
 import { getViewFromPath } from "@/lib/workspace-data";
 
 type WorkspaceTopbarProps = {
@@ -49,6 +52,12 @@ export function WorkspaceTopbar({ variant = "desktop" }: WorkspaceTopbarProps) {
     useTaskWorkspace();
   const projectLabel = activeProject?.name ?? (ready ? workspaceName : t("common.loading"));
   const [shareOpen, setShareOpen] = useState(false);
+  const [approvalsOpen, setApprovalsOpen] = useState(false);
+  const pendingApprovals = api.approval.requests.pendingCount.useQuery(
+    { organizationId: organizationId ?? "" },
+    { enabled: Boolean(organizationId), refetchInterval: 30_000 },
+  );
+  const pendingCount = pendingApprovals.data ?? 0;
   const [signingOut, setSigningOut] = useState(false);
   const isMobile = variant === "mobile";
 
@@ -105,6 +114,20 @@ export function WorkspaceTopbar({ variant = "desktop" }: WorkspaceTopbarProps) {
         </div>
 
         <div className="flex shrink-0 items-center justify-end gap-1 sm:gap-1.5">
+          <button
+            type="button"
+            aria-label={t("approvals.title")}
+            title={t("approvals.title")}
+            onClick={() => setApprovalsOpen(true)}
+            className="relative flex size-8 items-center justify-center rounded-lg text-julow-muted outline-none ring-accent/40 transition-colors hover:bg-julow-glass-bg hover:text-julow-fg focus-visible:ring-2"
+          >
+            <Icon icon={CheckmarkBadge01Icon} size={18} />
+            {pendingCount > 0 && (
+              <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-semibold text-white">
+                {pendingCount > 9 ? "9+" : pendingCount}
+              </span>
+            )}
+          </button>
           <Button
             size="sm"
             variant="outline"
@@ -200,6 +223,12 @@ export function WorkspaceTopbar({ variant = "desktop" }: WorkspaceTopbarProps) {
             </Popover.Content>
           </Popover>
         </div>
+
+        <ApprovalsDialog
+          open={approvalsOpen}
+          onClose={() => setApprovalsOpen(false)}
+          organizationId={organizationId}
+        />
 
         <ShareDialog
           open={shareOpen}
