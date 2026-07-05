@@ -15,6 +15,7 @@ import {
   Mic01Icon,
   Mail01Icon,
   Queue01Icon,
+  Settings02Icon,
   SparklesIcon,
   StopIcon,
   Task01Icon,
@@ -31,13 +32,13 @@ import { Icon } from "@/components/ui/icon";
 import { Modal } from "@/components/ui/modal";
 import { SelectField } from "@/components/ui/select-field";
 import { AgentOrbAvatar } from "@/components/workspace/agent-avatar";
+import { AgentSettingsDialog } from "@/components/workspace/agent-settings-dialog";
 import { useAltDragScroll } from "@/components/workspace/use-alt-drag-scroll";
 import { useTaskWorkspace } from "@/components/workspace/task-workspace-context";
 import { useVoiceInput } from "@/lib/use-voice-input";
 import {
   assignProposalNames,
-  PROPOSAL_VERB,
-  proposalDetail,
+  PROPOSAL_ACTION_TYPE,
   proposalTitle,
   type AgentProposal,
   type ProposalArgsMap,
@@ -680,7 +681,7 @@ export function ProposalCard({
   onApproveEmailEdited?: (args: ProposalArgsMap["propose_send_email"]) => void;
   workspaceName?: string;
 }) {
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
   const [editOpen, setEditOpen] = useState(false);
   const [emailEditOpen, setEmailEditOpen] = useState(false);
   const resolved = proposal.status !== "pending";
@@ -700,7 +701,6 @@ export function ProposalCard({
     proposal.kind === "propose_send_email" &&
     Boolean(onApproveEmailEdited);
   const clickable = Boolean(openableTaskId) || editable || emailEditable;
-  const detail = proposalDetail(proposal, locale);
 
   const handleOpen = () => {
     if (openableTaskId) onOpenTask?.(openableTaskId, proposal.projectId);
@@ -742,16 +742,11 @@ export function ProposalCard({
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-[11px] font-medium text-julow-muted">
-            {PROPOSAL_VERB[proposal.kind]}
+            {t(`proposal.verb.${proposal.kind}`)}
           </p>
           <p className="truncate text-sm font-medium text-julow-fg">
             {proposalTitle(proposal)}
           </p>
-          {detail && (
-            <p className="mt-0.5 whitespace-pre-wrap text-xs leading-relaxed text-julow-muted">
-              {detail}
-            </p>
-          )}
         </div>
       </div>
 
@@ -812,11 +807,8 @@ export function ProposalCard({
               {t("emailProposal.clickToEdit")}
             </button>
           )}
-          <p className="mt-2 text-[11px] text-julow-muted">
-            {t("agentPanel.proposalHint")}
-          </p>
           <div
-            className="mt-1.5 flex items-center gap-2"
+            className="mt-2 flex flex-wrap items-center gap-2"
             onClick={(e) => e.stopPropagation()}
           >
             <Button
@@ -890,6 +882,7 @@ export function ProposalCard({
 
 function AgentChat() {
   const [draft, setDraft] = useState("");
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [busyProposals, setBusyProposals] = useState<Record<string, boolean>>({});
   const { ref: suggestionsRef, scrollProps } = useAltDragScroll<HTMLDivElement>();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -1025,6 +1018,36 @@ function AgentChat() {
   const handleContentClick = useInternalLinkClick();
 
   const live = isLive && Boolean(activeAgent);
+
+  // Auto-approval: proposals whose action type is set to AUTO in the
+  // workspace rules are executed immediately, without waiting for a click.
+  const rulesQuery = api.approval.rules.list.useQuery(
+    { organizationId: organizationId ?? "" },
+    { enabled: isLive, staleTime: 30_000 },
+  );
+  const autoTypes = useMemo(
+    () =>
+      new Set(
+        (rulesQuery.data ?? [])
+          .filter((r) => r.level === "AUTO")
+          .map((r) => r.actionType),
+      ),
+    [rulesQuery.data],
+  );
+  const autoHandledRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (chat.isStreaming || autoTypes.size === 0) return;
+    for (const turn of chat.messages) {
+      for (const p of turn.proposals ?? []) {
+        if (p.status !== "pending" || autoHandledRef.current.has(p.id)) continue;
+        const actionType = PROPOSAL_ACTION_TYPE[p.kind];
+        if (!actionType || !autoTypes.has(actionType)) continue;
+        autoHandledRef.current.add(p.id);
+        void handleAccept(turn, p);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chat.messages, chat.isStreaming, autoTypes]);
 
   const suggestions = useMemo(
     () => [t("suggestion.1"), t("suggestion.2"), t("suggestion.3")],
@@ -1186,7 +1209,22 @@ function AgentChat() {
             ariaLabel={t("agentPanel.agentInfo")}
           />
         ) : null}
+        <button
+          type="button"
+          aria-label={t("agentSettings.open")}
+          title={t("agentSettings.open")}
+          onClick={() => setSettingsOpen(true)}
+          className="shrink-0 rounded-lg p-1.5 text-julow-muted transition-colors hover:bg-julow-glass-bg hover:text-julow-fg"
+        >
+          <Icon icon={Settings02Icon} size={16} />
+        </button>
       </div>
+
+      <AgentSettingsDialog
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        organizationId={organizationId}
+      />
 
       <div
         ref={scrollRef}

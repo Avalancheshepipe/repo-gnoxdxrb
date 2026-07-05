@@ -15,8 +15,10 @@ import {
   workerToolNames,
   type ToolKey,
 } from "@/server/ai/capabilities";
+import { gateAction, type GateOutcome } from "@/server/approvals/gate";
 import { prisma } from "@/server/db";
 import { enqueueAgentRun } from "@/server/queue/enqueue";
+import type { ApprovalActionType } from "@/generated/prisma/enums";
 
 export type AgentToolContext = {
   organizationId: string;
@@ -75,6 +77,10 @@ async function logActivity(
   });
 }
 
+type GateResult =
+  | { ok: false; blocked: true; error: string }
+  | { ok: true; pendingApproval: true; approvalRequestId: string; message: string };
+
 /**
  * Build the toolset an agent can call. Tools are FILTERED by the agent's
  * configured capabilities (agent.tools), so each agent only gets what it's set
@@ -93,6 +99,33 @@ export function createAgentTools(ctx: AgentToolContext) {
     agentName: ctx.agentName,
     projectId: ctx.projectId,
   };
+
+  const gateCtx = {
+    organizationId: ctx.organizationId,
+    agentId: ctx.agentId,
+    agentName: ctx.agentName,
+    runId: ctx.runId,
+    projectId: ctx.projectId,
+    taskId: ctx.taskId,
+  };
+
+  /** Approval-gate check for a write tool; null means proceed (AUTO). */
+  async function checkGate(
+    actionType: ApprovalActionType,
+    actionData: Record<string, unknown>,
+  ): Promise<GateResult | null> {
+    const outcome: GateOutcome = await gateAction(gateCtx, actionType, actionData);
+    if (outcome.decision === "auto") return null;
+    if (outcome.decision === "blocked") {
+      return { ok: false, blocked: true, error: outcome.message };
+    }
+    return {
+      ok: true,
+      pendingApproval: true,
+      approvalRequestId: outcome.requestId,
+      message: outcome.message,
+    };
+  }
 
   const defs = {
     list_tasks: tool({
@@ -144,6 +177,14 @@ export function createAgentTools(ctx: AgentToolContext) {
           .default("todo"),
       }),
       execute: async ({ title, description, projectId, priority, status }) => {
+        const gated = await checkGate("CREATE_TASK", {
+          title,
+          description,
+          projectId,
+          priority,
+          status,
+        });
+        if (gated) return gated;
         const resolved = await resolveProjectId(ctx, projectId);
         const task = await prisma.task.create({
           data: {
@@ -170,6 +211,13 @@ export function createAgentTools(ctx: AgentToolContext) {
         title: z.string().min(1).max(200).optional().describe("New title (rename)"),
       }),
       execute: async ({ taskId, status, priority, title }) => {
+        const gated = await checkGate("UPDATE_TASK", {
+          taskId,
+          status,
+          priority,
+          title,
+        });
+        if (gated) return gated;
         const task = await prisma.task.findFirst({
           where: { id: taskId, project: { organizationId: ctx.organizationId } },
           select: { id: true, title: true },
@@ -196,6 +244,8 @@ export function createAgentTools(ctx: AgentToolContext) {
         archived: z.boolean().default(true),
       }),
       execute: async ({ taskId, archived }) => {
+        const gated = await checkGate("DELETE_TASK", { taskId, archived });
+        if (gated) return gated;
         const task = await prisma.task.findFirst({
           where: { id: taskId, project: { organizationId: ctx.organizationId } },
           select: { id: true, title: true },
@@ -220,6 +270,13 @@ export function createAgentTools(ctx: AgentToolContext) {
         linkTaskId: z.string().optional(),
       }),
       execute: async ({ title, body, projectId, linkTaskId }) => {
+        const gated = await checkGate("CANVAS_NOTE", {
+          title,
+          body,
+          projectId,
+          linkTaskId,
+        });
+        if (gated) return gated;
         const resolved = await resolveProjectId(ctx, projectId);
         const existing = await prisma.canvasNode.findMany({
           where: { projectId: resolved },
@@ -298,6 +355,8 @@ export function createAgentTools(ctx: AgentToolContext) {
           .describe("1-4 independent sub-objectives to run in parallel"),
       }),
       execute: async ({ subObjectives }) => {
+        const gated = await checkGate("SPLIT_TASK", { subObjectives });
+        if (gated) return gated;
         const self = await prisma.agent.findFirst({
           where: { id: ctx.agentId },
           select: { id: true, name: true },
@@ -380,6 +439,13 @@ export function createAgentTools(ctx: AgentToolContext) {
         taskId: z.string().optional(),
       }),
       execute: async ({ format, title, sections, sheet, taskId }) => {
+        const gated = await checkGate("CREATE_DOCUMENT", {
+          format,
+          title,
+          content: { sections, sheet },
+          taskId: taskId ?? ctx.taskId,
+        });
+        if (gated) return gated;
         const r = await executeCreateDocument(actionCtx, {
           format,
           title,

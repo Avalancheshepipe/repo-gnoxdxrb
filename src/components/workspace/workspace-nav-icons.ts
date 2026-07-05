@@ -1,8 +1,4 @@
-import {
-  CanvasIcon,
-  InboxIcon,
-  WorkflowCircle01Icon,
-} from "@hugeicons/core-free-icons";
+import { CanvasIcon, InboxIcon } from "@hugeicons/core-free-icons";
 import type { IconSvgElement } from "@hugeicons/react";
 import type { WorkspaceView } from "@/lib/workspace-data";
 
@@ -12,5 +8,4 @@ export const workspaceViewIcons: Record<
 > = {
   canvas: CanvasIcon,
   inbox: InboxIcon,
-  automations: WorkflowCircle01Icon,
 };

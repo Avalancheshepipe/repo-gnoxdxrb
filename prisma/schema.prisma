@@ -37,6 +37,7 @@ model User {
   triggeredRuns AgentRun[]   @relation("RunTrigger")
   chatThreads  ChatThread[]
   authoredBriefs TaskAgentBrief[] @relation("BriefAuthor")
+  approvalDecisions ApprovalRequest[] @relation("ApprovalDecider")
 
   @@map("user")
 }
@@ -107,6 +108,8 @@ model Organization {
   activities  ActivityLog[]
   chatThreads ChatThread[]
   emailLogs   EmailLog[]
+  approvalRules    ApprovalRule[]
+  approvalRequests ApprovalRequest[]
 
   @@map("organization")
 }
@@ -351,6 +354,7 @@ model Agent {
   canvasNodes   CanvasNode[]
   chatThreads   ChatThread[]
   projectSubscriptions ProjectAgent[]
+  approvalRequests ApprovalRequest[]
 
   @@index([organizationId])
   @@map("agent")
@@ -380,6 +384,7 @@ model AgentRun {
   updatedAt     DateTime    @updatedAt
 
   steps AgentStep[]
+  approvalRequests ApprovalRequest[]
 
   @@index([agentId, status])
   @@index([taskId])
@@ -584,6 +589,77 @@ model ChatMessage {
 
   @@index([threadId])
   @@map("chat_message")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Approval gates: which agent actions run automatically, which need explicit
+// user approval, and which are blocked. Rules are per-workspace per action
+// type; requests are the pending/decided approvals themselves.
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum ApprovalActionType {
+  CREATE_TASK
+  UPDATE_TASK
+  DELETE_TASK
+  CREATE_DOCUMENT
+  SEND_EMAIL
+  SPLIT_TASK
+  CANVAS_NOTE
+  GITHUB_PUSH
+  DEVIN_DELEGATE
+}
+
+enum ApprovalLevel {
+  AUTO
+  APPROVE
+  BLOCKED
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  EXPIRED
+}
+
+model ApprovalRule {
+  id             String             @id @default(cuid())
+  organizationId String
+  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  actionType     ApprovalActionType
+  level          ApprovalLevel      @default(AUTO)
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  @@unique([organizationId, actionType])
+  @@index([organizationId])
+  @@map("approval_rule")
+}
+
+model ApprovalRequest {
+  id             String             @id @default(cuid())
+  organizationId String
+  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  agentId        String?
+  agent          Agent?             @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  agentRunId     String?
+  agentRun       AgentRun?          @relation(fields: [agentRunId], references: [id], onDelete: SetNull)
+  actionType     ApprovalActionType
+  actionData     Json
+  status         ApprovalStatus     @default(PENDING)
+  requestedBy    String // agent display name
+  decidedById    String?
+  decidedBy      User?              @relation("ApprovalDecider", fields: [decidedById], references: [id], onDelete: SetNull)
+  // Result / error of executing the approved action, for auditability.
+  result         Json?
+  error          String?            @db.Text
+  expiresAt      DateTime
+  decidedAt      DateTime?
+  createdAt      DateTime           @default(now())
+
+  @@index([organizationId, status])
+  @@index([organizationId, createdAt])
+  @@map("approval_request")
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

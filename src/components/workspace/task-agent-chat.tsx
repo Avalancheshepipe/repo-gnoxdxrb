@@ -14,6 +14,7 @@ import {
 } from "@/components/workspace/agent-panel";
 import { useTaskWorkspace } from "@/components/workspace/task-workspace-context";
 import {
+  PROPOSAL_ACTION_TYPE,
   type AgentProposal,
   type ProposalArgsMap,
   type ProposalKind,
@@ -203,6 +204,36 @@ export function TaskAgentChat({ task }: { task: InboxTask }) {
     wasRunningRef.current = runningActive;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [runningActive]);
+
+  // Auto-approval: proposals whose action type is AUTO in the workspace
+  // rules are executed without waiting for the user's click.
+  const rulesQuery = api.approval.rules.list.useQuery(
+    { organizationId: organizationId ?? "" },
+    { enabled: isLive, staleTime: 30_000 },
+  );
+  const autoTypes = useMemo(
+    () =>
+      new Set(
+        (rulesQuery.data ?? [])
+          .filter((r) => r.level === "AUTO")
+          .map((r) => r.actionType),
+      ),
+    [rulesQuery.data],
+  );
+  const autoHandledRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (chat.isStreaming || autoTypes.size === 0) return;
+    for (const msg of persisted) {
+      for (const p of msg.proposals) {
+        if (p.status !== "pending" || autoHandledRef.current.has(p.id)) continue;
+        const actionType = PROPOSAL_ACTION_TYPE[p.kind];
+        if (!actionType || !autoTypes.has(actionType)) continue;
+        autoHandledRef.current.add(p.id);
+        void accept(msg, p);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [persisted, chat.isStreaming, autoTypes]);
 
   const mentionMatches = useMemo(() => {
     if (!mention) return [];
